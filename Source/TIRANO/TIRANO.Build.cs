@@ -6,8 +6,19 @@ public class TIRANO : ModuleRules
 {
 	public TIRANO(ReadOnlyTargetRules Target) : base(Target)
 	{
+		PublicIncludePaths.Add(ModuleDirectory);
+
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
+		PublicDependencyModuleNames.AddRange(new string[] {
+			"Core", 
+			"CoreUObject", 
+			"Engine", 
+			"InputCore", 
+			"EnhancedInput",
+			"AnimGraphRuntime",  
+			"AIModule",
+			"GameplayTags"
+		});
 	}
 }
