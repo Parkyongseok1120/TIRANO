@@ -61,8 +61,15 @@ void ACPlayerCharacter::Tick(float DeltaTime)
 void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
+	
 	UCEnhancedInputComponent* CEnhancedInputComponent = Cast<UCEnhancedInputComponent>(PlayerInputComponent);
+	   
+	if (!CEnhancedInputComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerInputComponent가 UCEnhancedInputComponent 타입이 아닙니다!"));
+		return; // 또는 적절히 오류 처리 
+	}
+	
 	check(CEnhancedInputComponent);
 
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Move, ETriggerEvent::Triggered, this, &ACPlayerCharacter::Input_Move);
@@ -78,10 +85,17 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 void ACPlayerCharacter::BeginZoom()
 {
+	if (bisSprint == true)
+		EndSprint();
+
+	bWantsToZoom = true;
+	SpringArm->bEnableCameraLag = false;
 }
 
 void ACPlayerCharacter::EndZoom()
 {
+	bWantsToZoom = false;
+	SpringArm->bEnableCameraLag = true;
 }
 
 void ACPlayerCharacter::Input_Move(const FInputActionValue& InputActionValue)
@@ -107,14 +121,28 @@ void ACPlayerCharacter::Input_Move(const FInputActionValue& InputActionValue)
 
 void ACPlayerCharacter::Input_Look(const FInputActionValue& InputActionValue)
 {
+	FVector2D LookAxisVector = InputActionValue.Get<FVector2D>();
+	
+	if (Controller != nullptr)
+	{
+		AddControllerYawInput(LookAxisVector.X / 5);
+		AddControllerPitchInput(LookAxisVector.Y / -5);
+	}
 }
 
 void ACPlayerCharacter::BeginSprint()
 {
+	if (bWantsToZoom == false)
+	{
+		bisSprint = true;
+		GetCharacterMovement()->MaxWalkSpeed = SprintingSpeed;
+	}
 }
 
 void ACPlayerCharacter::EndSprint()
 {
+	bisSprint = false;
+	OnWalk();
 }
 
 void ACPlayerCharacter::OnWalk()
@@ -123,7 +151,19 @@ void ACPlayerCharacter::OnWalk()
 
 void ACPlayerCharacter::Jump()
 {
+	// 첫 번째 점프
 	Super::Jump();
+	if (IsGrounded() != true && bCanDoubleJump == true)
+	{
+		// 더블 점프
+		LaunchCharacter(FVector(0.0f, 0.0f, JumpForce), false, true);
+		bCanDoubleJump = false;
+	}
+
+	if (IsGrounded() == true)
+	{
+		bCanDoubleJump = true;
+	}
 }
 
 bool ACPlayerCharacter::IsGrounded() const
