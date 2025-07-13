@@ -142,6 +142,7 @@ void ACPlayerCharacter::EndSprint()
 
 void ACPlayerCharacter::OnWalk()
 {
+	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
 }
 
 void ACPlayerCharacter::Jump()
@@ -163,6 +164,33 @@ void ACPlayerCharacter::Jump()
 
 bool ACPlayerCharacter::IsGrounded() const
 {
-	return false;
+	FVector Start = GetActorLocation();
+	FVector End = Start - FVector(0, 0, 100.0f);  // 발 아래 100 유닛까지 체크
+
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);  // 자기 자신은 무시
+
+	// Line Trace 실행
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		Start,
+		End,
+		ECC_Visibility,  // 또는 커스텀 트레이스 채널
+		QueryParams
+	);
+
+	// 디버그 표시 (개발 중에 유용)
+	DrawDebugLine(
+		GetWorld(),
+		Start,
+		End,
+		FColor::Red,
+		false,
+		1.0f,
+		0,
+		1.0f
+	);
+	return bHit;
 }
 
