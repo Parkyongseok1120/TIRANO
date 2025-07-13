@@ -10,7 +10,7 @@
 class UCInputComponent;
 class UCInputConfig;
 class USkeletalMeshComponent;
-
+class UCDashComponent;
 struct FInputActionValue;
 
 
@@ -50,6 +50,7 @@ private:
 	void OnWalk();
 	void Jump();
 	bool IsGrounded()const;
+	void BeginDash();
 
 	
 	
@@ -107,5 +108,9 @@ private:
 	int32 CurrentJumpCount = 0;
 	
 	bool bCanDoubleJump;
+
+private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities", meta = (AllowPrivateAccess = "true"))
+	class UCDashComponent* DashComponent;
 	
 };

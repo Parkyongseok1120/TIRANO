@@ -4,6 +4,7 @@
 #include "00_Character/CPlayerCharacter.h"
 #include "00_Character/02_Component/CEnhancedInputComponent.h"
 #include "00_Character/02_Component/CGameplayTags.h"
+#include "00_Character/02_Component/CDashComponent.h"
 
 
 #include "EnhancedInput/Public/InputAction.h"
@@ -26,6 +27,7 @@ ACPlayerCharacter::ACPlayerCharacter()
 
 	PlayerCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	PlayerCamera->SetupAttachment(SpringArm);
+	DashComponent = CreateDefaultSubobject<UCDashComponent>(TEXT("DashComponent"));
 
 	GetMesh()->SetRelativeLocation(FVector(0, 0, -90));
 	GetMesh()->SetRelativeRotation(FRotator(0, -90, 0));
@@ -71,7 +73,8 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Mouse_Right, ETriggerEvent::Started, this, &ACPlayerCharacter::BeginZoom);
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Mouse_Right, ETriggerEvent::Completed, this, &ACPlayerCharacter::EndZoom);
-
+	// 대시 입력 바인딩 (Shift 키로 가정)
+	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Dash, ETriggerEvent::Started, this, &ACPlayerCharacter::BeginDash);
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Jump, ETriggerEvent::Started, this, &ACPlayerCharacter::Jump);
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Sprint, ETriggerEvent::Started, this, &ACPlayerCharacter::BeginSprint);
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Sprint, ETriggerEvent::Completed, this, &ACPlayerCharacter::EndSprint);
@@ -96,7 +99,6 @@ void ACPlayerCharacter::Input_Move(const FInputActionValue& InputActionValue)
 {
 	// input is a Vector2D
 	FVector2D MovementVector = InputActionValue.Get<FVector2D>();
-	CLog::Log(FString::Printf(TEXT("Input_Move: %s"), *MovementVector.ToString()));
 
 	if (Controller != nullptr)
 	{
@@ -105,8 +107,16 @@ void ACPlayerCharacter::Input_Move(const FInputActionValue& InputActionValue)
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+		// 최종 입력 방향 계산
+		FVector InputDirection = ForwardDirection * MovementVector.Y + RightDirection * MovementVector.X;
+        
+		// 대시 컴포넌트에 입력 방향 전달
+		if (DashComponent)
+		{
+			DashComponent->SetInputDirection(InputDirection);
+		}
 
 		// add movement 
 		AddMovementInput(ForwardDirection, MovementVector.Y);
@@ -131,6 +141,12 @@ void ACPlayerCharacter::BeginSprint()
 	{
 		bisSprint = true;
 		GetCharacterMovement()->MaxWalkSpeed = SprintingSpeed;
+        
+		// 대시 컴포넌트에 달리기 상태 전달
+		if (DashComponent)
+		{
+			DashComponent->SetOwnerSprinting(true);
+		}
 	}
 }
 
@@ -138,8 +154,13 @@ void ACPlayerCharacter::EndSprint()
 {
 	bisSprint = false;
 	OnWalk();
+    
+	// 대시 컴포넌트에 달리기 종료 상태 전달
+	if (DashComponent)
+	{
+		DashComponent->SetOwnerSprinting(false);
+	}
 }
-
 void ACPlayerCharacter::OnWalk()
 {
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
@@ -159,6 +180,15 @@ void ACPlayerCharacter::Jump()
 	if (IsGrounded() == true)
 	{
 		bCanDoubleJump = true;
+	}
+}
+
+// 대시 시작 함수
+void ACPlayerCharacter::BeginDash()
+{
+	if (DashComponent)
+	{
+		DashComponent->StartDash();
 	}
 }
 
