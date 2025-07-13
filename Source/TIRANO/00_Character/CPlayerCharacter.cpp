@@ -5,6 +5,8 @@
 #include "00_Character/02_Component/CEnhancedInputComponent.h"
 #include "00_Character/02_Component/CGameplayTags.h"
 #include "00_Character/02_Component/CDashComponent.h"
+#include "00_Character/02_Component/CInventoryComponent.h"
+#include "CHotbarWidget.h"
 
 
 #include "EnhancedInput/Public/InputAction.h"
@@ -16,6 +18,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 
 #include "Global.h"
+#include "Blueprint/UserWidget.h"
 
 // Sets default values
 ACPlayerCharacter::ACPlayerCharacter()
@@ -28,6 +31,7 @@ ACPlayerCharacter::ACPlayerCharacter()
 	PlayerCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	PlayerCamera->SetupAttachment(SpringArm);
 	DashComponent = CreateDefaultSubobject<UCDashComponent>(TEXT("DashComponent"));
+    InventoryComponent = CreateDefaultSubobject<UCInventoryComponent>(TEXT("InventoryComponent"));
 
 	GetMesh()->SetRelativeLocation(FVector(0, 0, -90));
 	GetMesh()->SetRelativeRotation(FRotator(0, -90, 0));
@@ -42,7 +46,6 @@ ACPlayerCharacter::ACPlayerCharacter()
 	bCanDoubleJump = true;
 }
 
-// Called when the game starts or when spawned
 void ACPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -50,6 +53,27 @@ void ACPlayerCharacter::BeginPlay()
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
 	//StateComponent->OnMovementTypeChanged.AddDynamic(this, &ACPlayerCharacter::OnMovementTypeChanged);
 	SpringArm->bEnableCameraLag = true;
+
+	// DashComponent NULL 체크
+	if (!DashComponent)
+	{
+		CLog::Log("DashComponent가 NULL입니다. 확인 필요!");
+	}
+
+	// 핫바 위젯 생성 및 설정
+	if (HotbarWidgetClass)
+	{
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		if (PC)
+		{
+			HotbarWidget = CreateWidget<UCHotbarWidget>(PC, HotbarWidgetClass);
+			if (HotbarWidget)
+			{
+				HotbarWidget->AddToViewport(0); // 0은 z-order(레이어)
+				HotbarWidget->SetupHotbar(InventoryComponent);
+			}
+		}
+	}
 }
 
 // Called every frame
@@ -78,6 +102,13 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Jump, ETriggerEvent::Started, this, &ACPlayerCharacter::Jump);
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Sprint, ETriggerEvent::Started, this, &ACPlayerCharacter::BeginSprint);
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Sprint, ETriggerEvent::Completed, this, &ACPlayerCharacter::EndSprint);
+
+ 
+	// 인벤토리 관련 입력 바인딩
+	/*CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_NextItem, ETriggerEvent::Triggered, this, &ACPlayerCharacter::Input_NextItem);
+	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_PrevItem, ETriggerEvent::Triggered, this, &ACPlayerCharacter::Input_PrevItem);
+	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_SelectSlot, ETriggerEvent::Triggered, this, &ACPlayerCharacter::Input_SelectSlot);
+*/
 }
 
 void ACPlayerCharacter::BeginZoom()
@@ -224,3 +255,27 @@ bool ACPlayerCharacter::IsGrounded() const
 	return bHit;
 }
 
+void ACPlayerCharacter::Input_NextItem(const FInputActionValue& InputActionValue)
+{
+	if (InventoryComponent)
+	{
+		InventoryComponent->NextSlot();
+	}
+}
+
+void ACPlayerCharacter::Input_PrevItem(const FInputActionValue& InputActionValue)
+{
+	if (InventoryComponent)
+	{
+		InventoryComponent->PrevSlot();
+	}
+}
+
+void ACPlayerCharacter::Input_SelectSlot(const FInputActionValue& InputActionValue)
+{
+	int32 SlotIndex = FMath::FloorToInt(InputActionValue.Get<float>()) - 1; // 1~0 키를 0~9 인덱스로 변환
+	if (InventoryComponent && SlotIndex >= 0 && SlotIndex < 10)
+	{
+		InventoryComponent->SelectSlot(SlotIndex);
+	}
+}

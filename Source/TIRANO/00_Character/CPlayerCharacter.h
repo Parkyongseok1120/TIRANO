@@ -112,5 +112,29 @@ private:
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities", meta = (AllowPrivateAccess = "true"))
 	class UCDashComponent* DashComponent;
-	
+
+
+	//-----------------Inventory----------------------------
+
+	// 클래스 내에 추가
+private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
+	class UCInventoryComponent* InventoryComponent;
+
+	void Input_NextItem(const FInputActionValue& InputActionValue);
+	void Input_PrevItem(const FInputActionValue& InputActionValue);
+	void Input_SelectSlot(const FInputActionValue& InputActionValue);
+
+private:
+	// 핫바 위젯 관련
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UCHotbarWidget> HotbarWidgetClass;
+
+	UPROPERTY()
+	UCHotbarWidget* HotbarWidget;
+
+public:
+	// 인벤토리 컴포넌트 게터 함수
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	UCInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 };

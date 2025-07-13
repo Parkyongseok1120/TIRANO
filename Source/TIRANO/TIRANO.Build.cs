@@ -18,7 +18,10 @@ public class TIRANO : ModuleRules
 			"EnhancedInput",
 			"AnimGraphRuntime",  
 			"AIModule",
-			"GameplayTags"
+			"GameplayTags",
+			"UMG"
 		});
+		
+		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 	}
 }

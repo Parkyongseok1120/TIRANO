@@ -80,7 +80,7 @@ private:
 
     // 대시 지속 시간
     UPROPERTY(EditAnywhere, Category = "Dash", meta = (AllowPrivateAccess = "true"))
-    float DashDuration = 0.2f;
+    float DashDuration = 0.1f;
 
     // 대시 쿨다운 시간
     UPROPERTY(EditAnywhere, Category = "Dash", meta = (AllowPrivateAccess = "true"))
@@ -104,7 +104,7 @@ private:
 
     // 대시 속도
     UPROPERTY(EditAnywhere, Category = "Dash", meta = (AllowPrivateAccess = "true"))
-    float DashSpeed = 4000.0f;
+    float DashSpeed = 10000.0f;
     
     // ----- 공중 대시 관련 설정 -----
     
@@ -114,7 +114,7 @@ private:
 
     // 공중 대시 지속 시간 조절 계수 (1.0보다 작게 설정하면 공중 대시 시간이 짧아짐)
     UPROPERTY(EditAnywhere, Category = "Dash", meta = (AllowPrivateAccess = "true"))
-    float AirDashDurationModifier = 0.2f;
+    float AirDashDurationModifier = 0.1f;
     
     // 공중 대시 거리 조정 계수
     UPROPERTY(EditAnywhere, Category = "Dash", meta = (AllowPrivateAccess = "true"))

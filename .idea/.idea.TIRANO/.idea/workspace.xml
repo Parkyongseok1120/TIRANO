@@ -14,12 +14,12 @@
   <component name="ChangeListManager">
     <list default="true" id="bd99840b-e018-48ff-8623-27e73cfbc730" name="변경" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TIRANO/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TIRANO/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Input/IC_Character.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Input/IC_Character.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Input/IMC_Default.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Input/IMC_Default.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CGameplayTags.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CGameplayTags.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CGameplayTags.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CGameplayTags.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/StarterContent/Architecture/Floor_400x400.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StarterContent/Architecture/Floor_400x400.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CDashComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CDashComponent.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/CPlayerCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/CPlayerCharacter.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/CPlayerCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/CPlayerCharacter.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/TIRANO.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/TIRANO.Build.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TIRANO.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/TIRANO.uproject" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,36 +33,41 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://3" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CDashComponent.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CDashComponent.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryComponent.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryComponent.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryItem.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryItem.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/CHotbarWidget.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/CHotbarWidget.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TIRANO/CAnimInstance.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TIRANO/CAnimInstance.h" root0="FORCE_HIGHLIGHTING" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="2zot1N4ZCcle94oVw5KFZcxatGH" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "C/C++ 프로젝트.TIRANO.executor": "Debug",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;C/C++ 프로젝트.TIRANO.executor&quot;: &quot;Debug&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="C/C++ 프로젝트.TIRANO">
     <configuration name="TIRANO" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">
@@ -154,7 +159,10 @@
       </method>
     </configuration>
     <configuration default="true" type="docker-deploy" factoryName="dockerfile" temporary="true">
-      <deployment type="dockerfile" />
+      <deployment type="dockerfile">
+        <settings />
+      </deployment>
+      <EXTENSION ID="com.jetbrains.rider.docker.debug" isFastModeEnabled="true" isSslEnabled="false" />
       <method v="2" />
     </configuration>
     <configuration name="EpicGames.Perforce.Fixture/Dockerfile" type="docker-deploy" factoryName="dockerfile" server-name="Docker">
@@ -177,6 +185,7 @@
       <option name="presentableId" value="Default" />
       <updated>1752409038330</updated>
       <workItem from="1752409039401" duration="5213000" />
+      <workItem from="1752424124847" duration="1972000" />
     </task>
     <servers />
   </component>
