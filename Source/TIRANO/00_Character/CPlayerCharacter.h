@@ -32,6 +32,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UCInputConfig* InputConfig;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
@@ -104,10 +107,5 @@ private:
 	int32 CurrentJumpCount = 0;
 	
 	bool bCanDoubleJump;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	UCInputConfig* InputConfig;
-
-
 	
 };

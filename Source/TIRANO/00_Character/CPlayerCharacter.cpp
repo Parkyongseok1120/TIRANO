@@ -63,12 +63,6 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	
 	UCEnhancedInputComponent* CEnhancedInputComponent = Cast<UCEnhancedInputComponent>(PlayerInputComponent);
-	   
-	if (!CEnhancedInputComponent)
-	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerInputComponent가 UCEnhancedInputComponent 타입이 아닙니다!"));
-		return; // 또는 적절히 오류 처리 
-	}
 	
 	check(CEnhancedInputComponent);
 
@@ -102,6 +96,7 @@ void ACPlayerCharacter::Input_Move(const FInputActionValue& InputActionValue)
 {
 	// input is a Vector2D
 	FVector2D MovementVector = InputActionValue.Get<FVector2D>();
+	CLog::Log(FString::Printf(TEXT("Input_Move: %s"), *MovementVector.ToString()));
 
 	if (Controller != nullptr)
 	{
