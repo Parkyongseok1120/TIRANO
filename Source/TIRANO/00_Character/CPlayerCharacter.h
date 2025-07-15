@@ -3,16 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemComponent.h"
 #include "GameFramework/Character.h"
 #include "CPlayerCharacter.generated.h"
 
 
+class UCPlayerAttributeSet;
 class UCInputComponent;
 class UCInputConfig;
 class USkeletalMeshComponent;
 class UCDashComponent;
 struct FInputActionValue;
-
+class UAbilitySystemComponent;
 
 UCLASS()
 class TIRANO_API ACPlayerCharacter : public ACharacter
@@ -137,4 +139,15 @@ public:
 	// 인벤토리 컴포넌트 게터 함수
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	UCInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+	
+	// --------------GAS(Health, Mana)----------------
+	
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
+
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	UAbilitySystemComponent* AbilitySystemComponent;
+	
+	UPROPERTY()
+	UCPlayerAttributeSet* AttributeSet;
 };

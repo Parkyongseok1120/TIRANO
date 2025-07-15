@@ -16,6 +16,8 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "AbilitySystemComponent.h"
+#include "00_Character/02_Component/CPlayerAttributeSet.h"
 
 #include "Global.h"
 #include "Blueprint/UserWidget.h"
@@ -44,6 +46,8 @@ ACPlayerCharacter::ACPlayerCharacter()
 	bWantsToZoom = false;
 	bisSprint = false;
 	bCanDoubleJump = true;
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AttributeSet = CreateDefaultSubobject<UCPlayerAttributeSet>(TEXT("AttributeSet"));
 }
 
 void ACPlayerCharacter::BeginPlay()
@@ -73,6 +77,18 @@ void ACPlayerCharacter::BeginPlay()
 				HotbarWidget->SetupHotbar(InventoryComponent);
 			}
 		}
+	}
+	if (AbilitySystemComponent)
+	{
+		// 속성 초기화 (필요한 경우)
+		if (AttributeSet)
+		{
+			// 초기값 설정 (데이터 테이블 등에서 불러오는 방식으로 확장 가능)
+			AbilitySystemComponent->InitStats(UCPlayerAttributeSet::StaticClass(), nullptr);
+		}
+    
+		// 기본 어빌리티 부여 로직 (필요한 경우 추가)
+		// GiveAbility(DefaultAbilities) 등으로 확장 가능
 	}
 }
 
@@ -278,4 +294,10 @@ void ACPlayerCharacter::Input_SelectSlot(const FInputActionValue& InputActionVal
 	{
 		InventoryComponent->SelectSlot(SlotIndex);
 	}
+}
+
+UAbilitySystemComponent* ACPlayerCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+
 }
