@@ -43,19 +43,63 @@ void UCInventoryComponent::PrevSlot()
 
 bool UCInventoryComponent::AddItem(const FInventoryItem& Item)
 {
-    // 빈 슬롯 찾기
+    int32 RemainingQuantity = Item.Quantity;
+
+    // 1단계: 같은 아이템 ID를 가진 슬롯에 추가 (최대 스택 제한 적용)
+    for (int32 i = 0; i < HotbarItems.Num(); i++)
+    {
+        if (HotbarItems[i].ItemID == Item.ItemID && !Item.ItemID.IsEmpty() && HotbarItems[i].Quantity > 0)
+        {
+            int32 MaxStack = 99; // 최대 스택 수 (필요에 따라 설정)
+            int32 SpaceLeft = MaxStack - HotbarItems[i].Quantity;
+
+            if (SpaceLeft > 0)
+            {
+                int32 QuantityToAdd = FMath::Min(SpaceLeft, RemainingQuantity);
+                HotbarItems[i].Quantity += QuantityToAdd;
+                RemainingQuantity -= QuantityToAdd;
+
+                if (RemainingQuantity <= 0)
+                {
+                    OnInventoryUpdated.Broadcast();
+                    CLog::Log(Item.ItemName + TEXT(" 스택됨. 총 수량: ") + FString::FromInt(HotbarItems[i].Quantity));
+                    return true;
+                }
+            }
+        }
+    }
+
+    // 2단계: 빈 슬롯에 추가
     for (int32 i = 0; i < HotbarItems.Num(); i++)
     {
         if (HotbarItems[i].Quantity == 0)
         {
-            HotbarItems[i] = Item;
+            int32 MaxStack = 99; // 최대 스택 수
+            int32 QuantityToAdd = FMath::Min(MaxStack, RemainingQuantity);
+
+            FInventoryItem NewItem = Item;
+            NewItem.Quantity = QuantityToAdd;
+
+            HotbarItems[i] = NewItem;
+            RemainingQuantity -= QuantityToAdd;
+
             OnInventoryUpdated.Broadcast();
-            return true;
+            CLog::Log(Item.ItemName + TEXT(" 새 슬롯에 추가됨. 수량: ") + FString::FromInt(NewItem.Quantity));
+
+            if (RemainingQuantity <= 0)
+            {
+                return true;
+            }
         }
     }
-    
-    // 빈 슬롯이 없음
-    return false;
+
+    // 3단계: 남은 수량 처리
+    if (RemainingQuantity > 0)
+    {
+        CLog::Log(Item.ItemName + TEXT(" 추가 실패. 남은 수량: ") + FString::FromInt(RemainingQuantity));
+    }
+
+    return RemainingQuantity <= 0;
 }
 
 void UCInventoryComponent::RemoveItem(int32 SlotIndex, int32 Count)

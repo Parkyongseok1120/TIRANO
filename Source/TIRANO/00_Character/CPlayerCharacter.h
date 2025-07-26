@@ -135,6 +135,8 @@ private:
 	UPROPERTY()
 	UCHotbarWidget* HotbarWidget;
 
+	
+
 public:
 	// 인벤토리 컴포넌트 게터 함수
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
@@ -150,4 +152,6 @@ protected:
 	
 	UPROPERTY()
 	UCPlayerAttributeSet* AttributeSet;
+	
+
 };

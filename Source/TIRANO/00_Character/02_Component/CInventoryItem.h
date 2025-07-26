@@ -12,6 +12,9 @@ struct FInventoryItem
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString ItemID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString ItemName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -28,6 +31,7 @@ struct FInventoryItem
 
 	FInventoryItem()
 	{
+		ItemID = TEXT("");
 		ItemName = TEXT("아이템 없음");
 		ItemIcon = nullptr;
 		ItemClass = nullptr;

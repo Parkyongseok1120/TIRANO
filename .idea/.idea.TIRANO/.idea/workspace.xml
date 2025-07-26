@@ -13,13 +13,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bd99840b-e018-48ff-8623-27e73cfbc730" name="변경" comment="">
+      <change afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CItemImageManager.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CItemImageManager.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TIRANO/01_Item/CPickupItem.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TIRANO/01_Item/CPickupItem.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.TIRANO.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TIRANO.dir/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TIRANO/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TIRANO/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/StarterContent/Architecture/Floor_400x400.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StarterContent/Architecture/Floor_400x400.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CDashComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CDashComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/00_Characters/BP_CPlayerCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/00_Characters/BP_CPlayerCharacter.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/StarterContent/HDRI/HDRI_Epic_Courtyard_Daylight.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StarterContent/HDRI/HDRI_Epic_Courtyard_Daylight.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryItem.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryItem.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/CHotbarWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/CHotbarWidget.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/CHotbarWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/CHotbarWidget.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/CPlayerCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/CPlayerCharacter.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/CPlayerCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/CPlayerCharacter.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TIRANO/TIRANO.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/TIRANO.Build.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TIRANO.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/TIRANO.uproject" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/TIRANOCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/TIRANOCharacter.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,6 +41,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="cidr-memory-view://0" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CDashComponent.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CDashComponent.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryComponent.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -186,6 +195,7 @@
       <updated>1752409038330</updated>
       <workItem from="1752409039401" duration="5213000" />
       <workItem from="1752424124847" duration="1972000" />
+      <workItem from="1753525870520" duration="4693000" />
     </task>
     <servers />
   </component>

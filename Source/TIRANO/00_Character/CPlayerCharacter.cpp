@@ -17,9 +17,11 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemComponent.h"
+#include "CGameInstance.h"
 #include "00_Character/02_Component/CPlayerAttributeSet.h"
 
 #include "Global.h"
+#include "02_Component/CItemImageManager.h"
 #include "Blueprint/UserWidget.h"
 
 // Sets default values
@@ -63,21 +65,7 @@ void ACPlayerCharacter::BeginPlay()
 	{
 		CLog::Log("DashComponent가 NULL입니다. 확인 필요!");
 	}
-
-	// 핫바 위젯 생성 및 설정
-	if (HotbarWidgetClass)
-	{
-		APlayerController* PC = Cast<APlayerController>(GetController());
-		if (PC)
-		{
-			HotbarWidget = CreateWidget<UCHotbarWidget>(PC, HotbarWidgetClass);
-			if (HotbarWidget)
-			{
-				HotbarWidget->AddToViewport(0); // 0은 z-order(레이어)
-				HotbarWidget->SetupHotbar(InventoryComponent);
-			}
-		}
-	}
+	
 	if (AbilitySystemComponent)
 	{
 		// 속성 초기화 (필요한 경우)
@@ -89,6 +77,23 @@ void ACPlayerCharacter::BeginPlay()
     
 		// 기본 어빌리티 부여 로직 (필요한 경우 추가)
 		// GiveAbility(DefaultAbilities) 등으로 확장 가능
+	}
+
+
+	// 핫바 위젯 생성 및 설정
+	if (HotbarWidgetClass)
+	{
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		if (PC && PC->IsLocalPlayerController()) // 로컬 플레이어만 UI 생성
+		{
+			HotbarWidget = CreateWidget<UCHotbarWidget>(PC, HotbarWidgetClass);
+			if (HotbarWidget)
+			{
+				HotbarWidget->AddToViewport(0);
+				HotbarWidget->SetupHotbar(InventoryComponent);
+				CLog::Log("핫바 위젯 생성 및 표시됨");
+			}
+		}
 	}
 }
 
