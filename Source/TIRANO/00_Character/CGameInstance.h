@@ -1,4 +1,6 @@
 ﻿// CGameInstance.h
+#pragma once
+
 #include "00_Character/02_Component/CItemImageManager.h"
 #include "CGameInstance.generated.h"
 
