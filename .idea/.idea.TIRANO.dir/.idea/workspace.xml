@@ -8,7 +8,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="119d8538-78ed-4da8-8282-78d528417c96" name="변경" comment="">
-      <change beforePath="$PROJECT_DIR$/Source/TIRANO/TIRANO.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/TIRANO.Build.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.TIRANO.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TIRANO.dir/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/StarterContent/Architecture/Floor_400x400.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StarterContent/Architecture/Floor_400x400.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/StarterContent/Blueprints/Blueprint_Effect_Smoke.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StarterContent/Blueprints/Blueprint_Effect_Smoke.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CEnhancedInputComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CEnhancedInputComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CGameplayTags.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CGameplayTags.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CPlayerAttributeSet.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CPlayerAttributeSet.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/00_Character/CHotbarWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/00_Character/CHotbarWidget.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/99_Util/CHelpers.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/99_Util/CHelpers.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TIRANO/Global.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TIRANO/Global.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TIRANO.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/TIRANO.uproject" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -23,11 +33,37 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CPlayerAttributeSet.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CPlayerAttributeSet.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/CPlayerCharacter.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CEnhancedInputComponent.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CEnhancedInputComponent.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CGameplayTags.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CGameplayTags.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInputComponent.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInputComponent.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInputConfig.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInputConfig.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryComponent.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryComponent.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryItem.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CInventoryItem.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CPlayerAttributeSet.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/02_Component/CPlayerAttributeSet.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/CHotbarWidget.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/CHotbarWidget.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/CPlayerCharacter.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TIRANO/00_Character/CPlayerCharacter.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/99_Util/CGameModeBase.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/99_Util/CGameModeBase.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/99_Util/CHelpers.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/99_Util/CLog.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/99_Util/CLog.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/CAnimInstance.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/CAnimInstance.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/Global.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TIRANO/TIRANO.Build.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/TIRANO.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/TIRANO.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/TIRANOGameMode.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TIRANO/TIRANOGameMode.h" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -38,22 +74,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "Uproject.TIRANO.executor": "Debug",
-    "git-widget-placeholder": "main",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "UnrealLogSettings",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;Uproject.TIRANO.executor&quot;: &quot;Debug&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;UnrealLogSettings&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="TIRANO" type="Uproject" factoryName="rider.uproject">
       <configuration_1 setup="1">
@@ -139,6 +175,9 @@
       <workItem from="1752563863654" duration="384000" />
       <workItem from="1752564273665" duration="1618000" />
       <workItem from="1752565968963" duration="93000" />
+      <workItem from="1752566121696" duration="3591000" />
+      <workItem from="1753524575061" duration="543000" />
+      <workItem from="1753525123934" duration="2000" />
     </task>
     <servers />
   </component>

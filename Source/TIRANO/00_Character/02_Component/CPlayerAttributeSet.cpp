@@ -1,4 +1,5 @@
-// CPlayerAttributeSet.cpp
+// Fill out your copyright notice in the Description page of Project Settings.
+
 #include "CPlayerAttributeSet.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"

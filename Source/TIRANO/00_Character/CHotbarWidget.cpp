@@ -1,4 +1,4 @@
-// CHotbarWidget.cpp
+// Fill out your copyright notice in the Description page of Project Settings.
 #include "CHotbarWidget.h"
 #include "00_Character/02_Component/CInventoryComponent.h"
 
