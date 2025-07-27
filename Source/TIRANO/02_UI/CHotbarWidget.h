@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "00_Character/02_Component/CInventoryItem.h"
+#include "00_Character/02_Component/03_Inventory/CInventoryItem.h"
 #include "Components/Border.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"

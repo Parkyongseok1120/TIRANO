@@ -3,7 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "00_Character/02_Component/CInventoryItem.h"
+#include "00_Character/02_Component/03_Inventory/CInventoryItem.h"
 #include "CPickupItem.generated.h"
 
 UCLASS()

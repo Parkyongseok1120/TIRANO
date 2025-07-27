@@ -2,7 +2,7 @@
 #include "CPickupItem.h"
 #include "Components/SphereComponent.h"
 #include "00_Character/CPlayerCharacter.h"
-#include "00_Character/02_Component/CInventoryComponent.h"
+#include "00_Character/02_Component/03_Inventory/CInventoryComponent.h"
 #include "Global.h"
 
 ACPickupItem::ACPickupItem()

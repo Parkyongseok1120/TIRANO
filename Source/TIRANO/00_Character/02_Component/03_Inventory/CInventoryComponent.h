@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "00_Character/02_Component/CInventoryItem.h"
+#include "00_Character/02_Component/03_Inventory/CInventoryItem.h"
 #include "CInventoryComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSelectedSlotChanged, int32, NewSlotIndex);

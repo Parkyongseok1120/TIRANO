@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "CHotbarWidget.h"
-#include "CGameInstance.h"
-#include "00_Character/02_Component/CInventoryComponent.h"
+#include "00_Character/CGameInstance.h"
+#include "00_Character/02_Component/03_Inventory/CInventoryComponent.h"
 
 void UCHotbarWidget::NativeConstruct()
 {

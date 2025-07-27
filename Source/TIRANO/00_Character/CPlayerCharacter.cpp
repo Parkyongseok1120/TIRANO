@@ -2,11 +2,11 @@
 
 
 #include "00_Character/CPlayerCharacter.h"
-#include "00_Character/02_Component/CEnhancedInputComponent.h"
-#include "00_Character/02_Component/CGameplayTags.h"
+#include "00_Character/02_Component/01_Input/CEnhancedInputComponent.h"
+#include "00_Character/02_Component/01_Input/CGameplayTags.h"
 #include "00_Character/02_Component/CDashComponent.h"
-#include "00_Character/02_Component/CInventoryComponent.h"
-#include "CHotbarWidget.h"
+#include "00_Character/02_Component/03_Inventory/CInventoryComponent.h"
+#include "02_UI/CHotbarWidget.h"
 
 
 #include "EnhancedInput/Public/InputAction.h"
@@ -18,10 +18,10 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemComponent.h"
 #include "CGameInstance.h"
-#include "00_Character/02_Component/CPlayerAttributeSet.h"
+#include "00_Character/02_Component/02_ABS/CPlayerAttributeSet.h"
 
 #include "Global.h"
-#include "02_Component/CItemImageManager.h"
+#include "02_Component/03_Inventory/CItemImageManager.h"
 #include "Blueprint/UserWidget.h"
 
 // Sets default values

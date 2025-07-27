@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "00_Character/02_Component/CInputComponent.h"
+#include "00_Character/02_Component/01_Input/CInputComponent.h"
 
 
 // Sets default values for this component's properties

@@ -1,7 +1,7 @@
 ﻿// CGameInstance.h
 #pragma once
 
-#include "00_Character/02_Component/CItemImageManager.h"
+#include "00_Character/02_Component/03_Inventory/CItemImageManager.h"
 #include "CGameInstance.generated.h"
 
 UCLASS()

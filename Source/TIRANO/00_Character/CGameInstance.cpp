@@ -1,6 +1,5 @@
 ﻿#include "CGameInstance.h"
-#include "00_Character/02_Component/CItemImageManager.h"
-
+#include "00_Character/02_Component/03_Inventory/CItemImageManager.h"
 UCGameInstance::UCGameInstance()
 {
 }
