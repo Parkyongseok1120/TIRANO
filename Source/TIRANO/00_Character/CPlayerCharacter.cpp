@@ -134,17 +134,20 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 void ACPlayerCharacter::BeginZoom()
 {
-	if (bisSprint == true)
+	/*if (bisSprint == true)
 		EndSprint();
 
 	bWantsToZoom = true;
 	SpringArm->bEnableCameraLag = false;
+	*/
 }
 
 void ACPlayerCharacter::EndZoom()
 {
+	/*
 	bWantsToZoom = false;
 	SpringArm->bEnableCameraLag = true;
+	*/
 }
 
 void ACPlayerCharacter::Input_Move(const FInputActionValue& InputActionValue)
@@ -220,7 +223,7 @@ void ACPlayerCharacter::OnWalk()
 
 void ACPlayerCharacter::Jump()
 {
-	// 첫 번째 점프
+	/*// 첫 번째 점프
 	Super::Jump();
 	if (IsGrounded() != true && bCanDoubleJump == true)
 	{
@@ -232,16 +235,16 @@ void ACPlayerCharacter::Jump()
 	if (IsGrounded() == true)
 	{
 		bCanDoubleJump = true;
-	}
+	}*/
 }
 
 // 대시 시작 함수
 void ACPlayerCharacter::BeginDash()
 {
-	if (DashComponent)
+	/*if (DashComponent)
 	{
 		DashComponent->StartDash();
-	}
+	}*/
 }
 
 bool ACPlayerCharacter::IsGrounded() const
