@@ -12,9 +12,14 @@ class UCInputComponent;
 class UCInputConfig;
 class USkeletalMeshComponent;
 class UCDashComponent;
-struct FInputActionValue;
 class UAbilitySystemComponent;
 class UCInventoryComponent;
+class UCStatusUI;
+
+struct FInputActionValue;
+
+// 스태미나 변경 델리게이트(현재값, 최대값)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStaminaChanged, float, Current, float, Max);
 
 UCLASS()
 class TIRANO_API ACPlayerCharacter : public ACharacter
@@ -107,6 +112,62 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities", meta = (AllowPrivateAccess = "true"))
 	class UCDashComponent* DashComponent;
 
+	//-----------------Stamina (달리기 스테이터스)----------------------------
+private:
+	// 최대 스태미나
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stamina", meta = (AllowPrivateAccess = "true", ClampMin = "1.0"))
+	float MaxStamina = 100.f;
+
+	// 현재 스태미나
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stamina", meta = (AllowPrivateAccess = "true"))
+	float CurrentStamina = 100.f;
+
+	// 달릴 때 초당 소모량
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stamina", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float SprintDrainPerSecond = 25.f;
+
+	// 걷거나 정지 시 초당 회복량
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stamina", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float WalkRegenPerSecond = 15.f;
+
+	// 소모 후 회복이 시작되기까지 딜레이(초)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stamina", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float RegenDelay = 0.6f;
+
+	// 바닥난 후 다시 달리기 시작할 수 있는 최소 회복치
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stamina", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float ExhaustedRecoverThreshold = 15.f;
+
+	// 마지막 소모 이후 경과 시간(회복 딜레이 판단용)
+	float TimeSinceLastStaminaUse = 0.f;
+
+	// 바닥나서 강제 종료 상태
+	bool bStaminaExhausted = false;
+
+	// 프레임마다 스태미나 업데이트
+	void UpdateStamina(float DeltaTime);
+
+	// 소모 직후 호출(딜레이 리셋)
+	void MarkStaminaUsed();
+
+	// 내부 헬퍼: 스태미나 값을 갱신하고 변경 시 브로드캐스트
+	void SetCurrentStamina(float NewValue);
+
+public:
+	// 블루프린트/UI 용
+	UFUNCTION(BlueprintPure, Category = "Stamina")
+	float GetStamina() const { return CurrentStamina; }
+
+	UFUNCTION(BlueprintPure, Category = "Stamina")
+	float GetMaxStamina() const { return MaxStamina; }
+
+	UFUNCTION(BlueprintPure, Category = "Stamina")
+	float GetStaminaRatio() const { return MaxStamina > 0.f ? CurrentStamina / MaxStamina : 0.f; }
+
+	// 스태미나 변경 이벤트(위젯에서 구독)
+	UPROPERTY(BlueprintAssignable, Category = "Stamina")
+	FOnStaminaChanged OnStaminaChanged;
+
 	//-----------------Inventory----------------------------
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
@@ -162,7 +223,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	UCInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 	
-	// --------------GAS(Health, Mana)----------------
+	// --------------GAS(Health, Mana) & StatusUI----------------
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
 protected:
@@ -171,4 +232,11 @@ protected:
 	
 	UPROPERTY()
 	UCPlayerAttributeSet* AttributeSet;
+
+	// 상태 UI
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UCStatusUI> StatusWidgetClass;
+
+	UPROPERTY()
+	UCStatusUI* StatusWidget = nullptr;
 };

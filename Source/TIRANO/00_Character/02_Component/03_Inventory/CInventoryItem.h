@@ -5,7 +5,7 @@
 #include "Engine/DataTable.h"
 #include "CInventoryItem.generated.h"
 
-class AThrowableItemBase;
+class ACThrowableItemBase;
 
 USTRUCT(BlueprintType)
 struct FInventoryItem
@@ -33,7 +33,7 @@ struct FInventoryItem
 
 	// [추가] 던질 수 있는 아이템인 경우 클래스 지정 (AThrowableItemBase 파생)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AThrowableItemBase> ThrowableClass;
+	TSubclassOf<ACThrowableItemBase> ThrowableClass;
 
 	// [선택] 인스펙터에서 조정할 프리뷰/홀드용 오프셋
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
