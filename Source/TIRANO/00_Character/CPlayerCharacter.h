@@ -7,7 +7,6 @@
 #include "GameFramework/Character.h"
 #include "CPlayerCharacter.generated.h"
 
-
 class UCPlayerAttributeSet;
 class UCInputComponent;
 class UCInputConfig;
@@ -15,6 +14,7 @@ class USkeletalMeshComponent;
 class UCDashComponent;
 struct FInputActionValue;
 class UAbilitySystemComponent;
+class UCInventoryComponent;
 
 UCLASS()
 class TIRANO_API ACPlayerCharacter : public ACharacter
@@ -34,13 +34,11 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
-	
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UCInputConfig* InputConfig;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
-	
 	void BeginZoom();
 	void EndZoom();
 
@@ -54,15 +52,11 @@ private:
 	bool IsGrounded()const;
 	void BeginDash();
 
-	
-	
 	//-----------------Camera------------------------------
-
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* SpringArm;
 
-	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* PlayerCamera;
 
@@ -87,9 +81,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
 
-
 	//-----------------Movement----------------------------
-	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MovementSpeed")
 	float SprintingSpeed = 650.0f;
@@ -115,10 +107,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities", meta = (AllowPrivateAccess = "true"))
 	class UCDashComponent* DashComponent;
 
-
 	//-----------------Inventory----------------------------
-
-	// 클래스 내에 추가
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
 	class UCInventoryComponent* InventoryComponent;
@@ -126,6 +115,39 @@ private:
 	void Input_NextItem(const FInputActionValue& InputActionValue);
 	void Input_PrevItem(const FInputActionValue& InputActionValue);
 	void Input_SelectSlot(const FInputActionValue& InputActionValue);
+
+	// 현재 손에 들고 있는 아이템 액터
+	UPROPERTY(Transient)
+	AActor* HeldItemActor = nullptr;
+
+	// 손 소켓 이름(스켈레탈 메시 소켓 필요)
+	UPROPERTY(EditAnywhere, Category = "Inventory|Equip")
+	FName HandSocketName = TEXT("RightHandSocket");
+
+	// 들고 있을 때의 위치/회전 오프셋
+	UPROPERTY(EditAnywhere, Category = "Inventory|Equip")
+	FVector HoldOffset = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory|Equip")
+	FRotator HoldRotationOffset = FRotator::ZeroRotator;
+
+	// 던지기 힘(임펄스)
+	UPROPERTY(EditAnywhere, Category = "Inventory|Throw")
+	float ThrowImpulseStrength = 2500.f;
+
+	// 슬롯 변경 시 자동 장착
+	UPROPERTY(EditAnywhere, Category = "Inventory|Equip")
+	bool bAutoEquipOnSlotChange = true;
+
+	// 장착/해제/던지기 로직
+	void EquipSelectedItem();
+	void UnequipCurrentItem();
+	void ThrowCurrentItem();
+	void GetAimInfo(FVector& OutStart, FVector& OutDir) const;
+
+	// 인벤토리 선택 슬롯 변경 이벤트
+	UFUNCTION()
+	void OnSelectedSlotChanged(int32 NewIndex);
 
 private:
 	// 핫바 위젯 관련
@@ -135,15 +157,12 @@ private:
 	UPROPERTY()
 	UCHotbarWidget* HotbarWidget;
 
-	
-
 public:
 	// 인벤토리 컴포넌트 게터 함수
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	UCInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 	
 	// --------------GAS(Health, Mana)----------------
-	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
 protected:
@@ -152,6 +171,4 @@ protected:
 	
 	UPROPERTY()
 	UCPlayerAttributeSet* AttributeSet;
-	
-
 };

@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "00_Character/CPlayerCharacter.h"
 #include "00_Character/02_Component/01_Input/CEnhancedInputComponent.h"
 #include "00_Character/02_Component/01_Input/CGameplayTags.h"
@@ -8,17 +7,21 @@
 #include "00_Character/02_Component/03_Inventory/CInventoryComponent.h"
 #include "02_UI/CHotbarWidget.h"
 
-
 #include "EnhancedInput/Public/InputAction.h"
 #include "GameFramework/Character.h"
 #include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/PrimitiveComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemComponent.h"
 #include "CGameInstance.h"
 #include "00_Character/02_Component/02_ABS/CPlayerAttributeSet.h"
+
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
 
 #include "Global.h"
 #include "02_Component/03_Inventory/CItemImageManager.h"
@@ -79,6 +82,16 @@ void ACPlayerCharacter::BeginPlay()
 		// GiveAbility(DefaultAbilities) 등으로 확장 가능
 	}
 
+	// 인벤토리 이벤트: 슬롯 변경 시 자동 장착
+	if (InventoryComponent)
+	{
+		InventoryComponent->OnSelectedSlotChanged.AddDynamic(this, &ACPlayerCharacter::OnSelectedSlotChanged);
+		// 시작 시 현재 선택 슬롯 장착 시도
+		if (bAutoEquipOnSlotChange)
+		{
+			EquipSelectedItem();
+		}
+	}
 
 	// 핫바 위젯 생성 및 설정
 	if (HotbarWidgetClass)
@@ -124,12 +137,16 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Sprint, ETriggerEvent::Started, this, &ACPlayerCharacter::BeginSprint);
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Sprint, ETriggerEvent::Completed, this, &ACPlayerCharacter::EndSprint);
 
- 
 	// 인벤토리 관련 입력 바인딩
-	/*CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_NextItem, ETriggerEvent::Triggered, this, &ACPlayerCharacter::Input_NextItem);
+	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_NextItem, ETriggerEvent::Triggered, this, &ACPlayerCharacter::Input_NextItem);
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_PrevItem, ETriggerEvent::Triggered, this, &ACPlayerCharacter::Input_PrevItem);
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_SelectSlot, ETriggerEvent::Triggered, this, &ACPlayerCharacter::Input_SelectSlot);
-*/
+
+	// 던지기 입력 바인딩(프로젝트 태그에 InputTag_Throw 존재해야 함)
+	if (CGameplayTags::InputTag_Throw.IsValid())
+	{
+		CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Throw, ETriggerEvent::Started, this, &ACPlayerCharacter::ThrowCurrentItem);
+	}
 }
 
 void ACPlayerCharacter::BeginZoom()
@@ -297,7 +314,8 @@ void ACPlayerCharacter::Input_PrevItem(const FInputActionValue& InputActionValue
 
 void ACPlayerCharacter::Input_SelectSlot(const FInputActionValue& InputActionValue)
 {
-	int32 SlotIndex = FMath::FloorToInt(InputActionValue.Get<float>()) - 1; // 1~0 키를 0~9 인덱스로 변환
+	// 1~0 키를 0~9 인덱스로 변환 (프로젝트 InputAction에서 1~10 값을 넘겨주도록 설정)
+	int32 SlotIndex = FMath::FloorToInt(InputActionValue.Get<float>()) - 1;
 	if (InventoryComponent && SlotIndex >= 0 && SlotIndex < 10)
 	{
 		InventoryComponent->SelectSlot(SlotIndex);
@@ -307,5 +325,153 @@ void ACPlayerCharacter::Input_SelectSlot(const FInputActionValue& InputActionVal
 UAbilitySystemComponent* ACPlayerCharacter::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
 
+// -------------------- 인벤토리 장착/던지기 --------------------
+
+void ACPlayerCharacter::OnSelectedSlotChanged(int32 /*NewIndex*/)
+{
+	if (bAutoEquipOnSlotChange)
+	{
+		EquipSelectedItem();
+	}
+}
+
+void ACPlayerCharacter::EquipSelectedItem()
+{
+	if (!InventoryComponent) return;
+
+	// 기존 들고 있던 액터 정리
+	UnequipCurrentItem();
+
+	// 선택된 아이템 확인
+	const FInventoryItem Item = InventoryComponent->GetSelectedItem();
+	if (Item.Quantity <= 0 || !Item.bIsEquippable || !Item.ItemClass)
+	{
+		return;
+	}
+
+	// 액터 스폰
+	FActorSpawnParameters Params;
+	Params.Owner = this;
+	Params.Instigator = this;
+
+	AActor* NewHeld = GetWorld()->SpawnActor<AActor>(Item.ItemClass, FTransform::Identity, Params);
+	if (!NewHeld)
+	{
+		return;
+	}
+
+	// 손 소켓에 부착
+	if (USkeletalMeshComponent* CharMesh = GetMesh())
+	{
+		NewHeld->AttachToComponent(CharMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandSocketName);
+		NewHeld->AddActorLocalOffset(HoldOffset);
+		NewHeld->AddActorLocalRotation(HoldRotationOffset);
+
+		// 들고 있을 땐 충돌/물리 비활성
+		if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(NewHeld->GetRootComponent()))
+		{
+			Prim->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			Prim->SetSimulatePhysics(false);
+		}
+
+		HeldItemActor = NewHeld;
+	}
+	else
+	{
+		NewHeld->Destroy();
+	}
+}
+
+void ACPlayerCharacter::UnequipCurrentItem()
+{
+	if (HeldItemActor)
+	{
+		HeldItemActor->Destroy();
+		HeldItemActor = nullptr;
+	}
+}
+
+void ACPlayerCharacter::GetAimInfo(FVector& OutStart, FVector& OutDir) const
+{
+	FRotator ViewRot;
+	FVector ViewLoc;
+	GetActorEyesViewPoint(ViewLoc, ViewRot);
+	OutStart = ViewLoc;
+	OutDir = ViewRot.Vector();
+
+	// 손 위치 기준으로 살짝 앞으로
+	if (const USkeletalMeshComponent* CharMesh = GetMesh())
+	{
+		const FVector HandLoc = CharMesh->GetSocketLocation(HandSocketName);
+		OutStart = HandLoc + OutDir * 20.f;
+	}
+}
+
+void ACPlayerCharacter::ThrowCurrentItem()
+{
+	if (!InventoryComponent || !HeldItemActor)
+	{
+		return;
+	}
+
+	const int32 SlotIndex = InventoryComponent->GetSelectedSlotIndex();
+	FInventoryItem Item = InventoryComponent->GetSelectedItem();
+	if (Item.Quantity <= 0 || !Item.bIsEquippable || !Item.ItemClass)
+	{
+		return;
+	}
+
+	// 조준 정보
+	FVector Start, Dir;
+	GetAimInfo(Start, Dir);
+
+	// 들고 있던 액터 분리
+	AActor* ThrownActor = HeldItemActor;
+	HeldItemActor = nullptr;
+
+	ThrownActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+	// 잠시 플레이어와의 충돌 무시
+	if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(ThrownActor->GetRootComponent()))
+	{
+		Prim->IgnoreActorWhenMoving(this, true);
+		// 던지기 직전 충돌/물리 설정
+		Prim->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+		// 가능한 경우 ProjectileMovement 우선 사용
+		if (UProjectileMovementComponent* Proj = ThrownActor->FindComponentByClass<UProjectileMovementComponent>())
+		{
+			Proj->Velocity = Dir * ThrowImpulseStrength;
+			Proj->Activate(true);
+			Prim->SetSimulatePhysics(false);
+		}
+		else
+		{
+			// 물리 임펄스 사용
+			Prim->SetSimulatePhysics(true);
+			Prim->AddImpulse(Dir * ThrowImpulseStrength, NAME_None, true);
+		}
+
+		// 짧은 시간 후 충돌 복구
+		FTimerHandle TimerHandle;
+		GetWorldTimerManager().SetTimer(TimerHandle, [Prim, this]()
+		{
+			if (IsValid(Prim))
+			{
+				Prim->IgnoreActorWhenMoving(this, false);
+			}
+		}, 0.2f, false);
+	}
+
+	// 인벤토리 수량 감소
+	InventoryComponent->RemoveItem(SlotIndex, 1);
+
+	// 남은 수량이 있으면 같은 아이템 다시 손에 들기
+	const FInventoryItem After = InventoryComponent->GetItemAt(SlotIndex);
+	if (After.Quantity > 0 && After.bIsEquippable && After.ItemClass)
+	{
+		EquipSelectedItem();
+	}
 }
