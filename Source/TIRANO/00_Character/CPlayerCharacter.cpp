@@ -157,7 +157,7 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	// 인벤토리 관련 입력 바인딩
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_NextItem, ETriggerEvent::Triggered, this, &ACPlayerCharacter::Input_NextItem);
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_PrevItem, ETriggerEvent::Triggered, this, &ACPlayerCharacter::Input_PrevItem);
-	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_SelectSlot, ETriggerEvent::Started, this, &ACPlayerCharacter::Input_SelectSlot);
+	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_SelectSlot, ETriggerEvent::Triggered, this, &ACPlayerCharacter::Input_SelectSlot);
 
 	// 던지기
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Throw, ETriggerEvent::Started, this, &ACPlayerCharacter::ThrowCurrentItem);
@@ -305,8 +305,8 @@ void ACPlayerCharacter::Input_PrevItem(const FInputActionValue& InputActionValue
 
 void ACPlayerCharacter::Input_SelectSlot(const FInputActionValue& InputActionValue)
 {
-	// 1~0 키를 0~9 인덱스로 변환 (IMC에서 키별 스칼라 1..10 설정 필요)
-	const int32 SlotIndex = FMath::FloorToInt(InputActionValue.Get<float>()) - 1;
+	// 1~0 키를 0~9 인덱스로 변환 (프로젝트 InputAction에서 1~10 값을 넘겨주도록 설정)
+	int32 SlotIndex = FMath::FloorToInt(InputActionValue.Get<float>()) - 1;
 	if (InventoryComponent && SlotIndex >= 0 && SlotIndex < 10)
 	{
 		InventoryComponent->SelectSlot(SlotIndex);
