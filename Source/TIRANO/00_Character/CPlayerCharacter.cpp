@@ -25,7 +25,6 @@
 #include "DrawDebugHelpers.h"
 
 #include "Global.h"
-#include "02_Component/03_Inventory/CItemImageManager.h"
 #include "Blueprint/UserWidget.h"
 
 // Sets default values

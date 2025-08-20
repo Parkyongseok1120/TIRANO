@@ -41,7 +41,6 @@ void UCHotbarWidget::SetupHotbar(UCInventoryComponent* InInventoryComponent)
 void UCHotbarWidget::UpdateHotbar(const TArray<FInventoryItem>& Items, int32 SelectedIndex)
 {
     UCGameInstance* GameInstance = Cast<UCGameInstance>(GetGameInstance());
-    UCItemImageManager* ItemImageManager = GameInstance ? GameInstance->GetItemImageManager() : nullptr;
     
     // 모든 슬롯 업데이트
     for (int32 i = 0; i < FMath::Min(Items.Num(), MAX_SLOTS); i++)
@@ -61,16 +60,7 @@ void UCHotbarWidget::UpdateHotbar(const TArray<FInventoryItem>& Items, int32 Sel
                 // 아이콘 설정 - ItemID로 이미지 매니저에서 먼저 찾고, 없으면 직접 참조 사용
                 UTexture2D* IconTexture = Item.ItemIcon;
                 
-                // ItemID가 있으면 이미지 매니저에서 아이콘 로드
-                if (!Item.ItemID.IsEmpty() && ItemImageManager)
-                {
-                    UTexture2D* ManagedIcon = ItemImageManager->GetItemIcon(Item.ItemID);
-                    if (ManagedIcon)
-                    {
-                        IconTexture = ManagedIcon;
-                    }
-                }
-                
+              
                 if (IconTexture)
                 {
                     FSlateBrush Brush;

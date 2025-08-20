@@ -1,7 +1,6 @@
 ﻿// CGameInstance.h
 #pragma once
 
-#include "00_Character/02_Component/03_Inventory/CItemImageManager.h"
 #include "CGameInstance.generated.h"
 
 UCLASS()
@@ -13,11 +12,5 @@ public:
 	UCGameInstance();
     
 	virtual void Init() override;
-    
-	UFUNCTION(BlueprintCallable, Category = "Item")
-	UCItemImageManager* GetItemImageManager() const { return ItemImageManager; }
-    
-private:
-	UPROPERTY()
-	UCItemImageManager* ItemImageManager;
+	
 };
