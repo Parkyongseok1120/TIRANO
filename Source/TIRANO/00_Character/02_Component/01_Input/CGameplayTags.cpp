@@ -15,5 +15,6 @@ namespace CGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_NextItem, "InputTag.NextItem");
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_PrevItem, "InputTag.PrevItem");
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_SelectSlot, "InputTag.SelectSlot");
+	UE_DEFINE_GAMEPLAY_TAG(InputTag_Throw, "InputTag.Throw");
 	UE_DEFINE_GAMEPLAY_TAG(InputTag_Interaction, "InputTag.Interaction");
 }

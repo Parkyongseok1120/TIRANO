@@ -14,7 +14,7 @@ AEnemyAIController::AEnemyAIController()
 
 	// Sight
 	SightConfig->SightRadius = 1500.f;            // 기본 시야 거리
-	SightConfig->LoseSightRadius = 1800.f;
+	SightConfig->LoseSightRadius = 3000.f;
 	SightConfig->PeripheralVisionAngleDegrees = 60.f; // 시야각
 	SightConfig->SetMaxAge(2.0f);
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
