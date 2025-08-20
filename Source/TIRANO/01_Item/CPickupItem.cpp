@@ -17,12 +17,16 @@ ACPickupItem::ACPickupItem()
     CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
     CollisionSphere->SetupAttachment(Mesh);
     CollisionSphere->SetSphereRadius(100.0f);
-    CollisionSphere->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+    // 플레이어만 오버랩하도록 명확히
+    CollisionSphere->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
 
     // 기본 아이템 데이터 설정
     ItemData.ItemID = TEXT("Item_HealthPotion");
     ItemData.ItemName = TEXT("체력 물약");
     ItemData.Quantity = 1;
+    // 필요 시 장착 가능 및 클래스 지정
+    // ItemData.bIsEquippable = true;
+    // ItemData.ItemClass = ...; 또는 ItemData.ThrowableClass = ...;
 }
 
 void ACPickupItem::BeginPlay()
@@ -36,19 +40,12 @@ void ACPickupItem::BeginPlay()
     }
 }
 
-void ACPickupItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-                                 UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-                                 bool bFromSweep, const FHitResult& SweepResult)
+void ACPickupItem::OnOverlapBegin(UPrimitiveComponent* /*OverlappedComponent*/, AActor* OtherActor,
+                                 UPrimitiveComponent* /*OtherComp*/, int32 /*OtherBodyIndex*/,
+                                 bool /*bFromSweep*/, const FHitResult& /*SweepResult*/)
 {
-    // 이미 제거된 액터라면 무시 (UE5에서는 IsValid만 사용)
-    if (!IsValid(this))
-    {
-        return;
-    }
-
-    // 플레이어와 충돌했는지 확인
     ACPlayerCharacter* Player = Cast<ACPlayerCharacter>(OtherActor);
-    if (!Player || !IsValid(Player))
+    if (!Player)
     {
         return;
     }
@@ -77,6 +74,7 @@ void ACPickupItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AAct
     }
     else
     {
-        CLog::Log("인벤토리가 꽉 참! " + ItemData.ItemName + TEXT(" 획득 실패"));
+        CLog::Log(FString::Printf(TEXT("인벤토리가 꽉 참! %s 획득 실패"), *ItemData.ItemName));
     }
+
 }

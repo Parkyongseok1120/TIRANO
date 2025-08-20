@@ -7,6 +7,7 @@
 #include "00_Character/02_Component/03_Inventory/CInventoryComponent.h"
 #include "02_UI/CHotbarWidget.h"
 #include "02_UI/CStatusUI.h"
+#include "01_Item/CThrowableItemBase.h"
 
 #include "EnhancedInput/Public/InputAction.h"
 #include "GameFramework/Character.h"
@@ -162,19 +163,11 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Throw, ETriggerEvent::Started, this, &ACPlayerCharacter::ThrowCurrentItem);
 }
 
-void ACPlayerCharacter::BeginZoom()
-{
-	/* Zoom 로직 사용 시 활성화 */
-}
-
-void ACPlayerCharacter::EndZoom()
-{
-	/* Zoom 로직 사용 시 활성화 */
-}
+void ACPlayerCharacter::BeginZoom() {}
+void ACPlayerCharacter::EndZoom() {}
 
 void ACPlayerCharacter::Input_Move(const FInputActionValue& InputActionValue)
 {
-	// input is a Vector2D
 	FVector2D MovementVector = InputActionValue.Get<FVector2D>();
 
 	if (Controller != nullptr)
@@ -185,16 +178,13 @@ void ACPlayerCharacter::Input_Move(const FInputActionValue& InputActionValue)
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-		// 최종 입력 방향 계산
 		FVector InputDirection = ForwardDirection * MovementVector.Y + RightDirection * MovementVector.X;
         
-		// 대시 컴포넌트에 입력 방향 전달
 		if (DashComponent)
 		{
 			DashComponent->SetInputDirection(InputDirection);
 		}
 
-		// add movement 
 		AddMovementInput(ForwardDirection, MovementVector.Y);
 		AddMovementInput(RightDirection, MovementVector.X);
 	}
@@ -213,11 +203,9 @@ void ACPlayerCharacter::Input_Look(const FInputActionValue& InputActionValue)
 
 void ACPlayerCharacter::BeginSprint()
 {
-	// 줌 중이면 스프린트 금지(기존 로직 유지)
 	if (bWantsToZoom)
 		return;
 
-	// 스태미나 부족/기진 상태면 시작 불가
 	if (CurrentStamina < ExhaustedRecoverThreshold || bStaminaExhausted)
 	{
 		return;
@@ -226,13 +214,11 @@ void ACPlayerCharacter::BeginSprint()
 	bisSprint = true;
 	GetCharacterMovement()->MaxWalkSpeed = SprintingSpeed;
 
-	// 대시 컴포넌트에 달리기 상태 전달
 	if (DashComponent)
 	{
 		DashComponent->SetOwnerSprinting(true);
 	}
 
-	// 소모 딜레이 리셋
 	MarkStaminaUsed();
 }
 
@@ -260,7 +246,6 @@ void ACPlayerCharacter::Jump()
 	/* 더블 점프 로직 사용 시 활성화 */
 }
 
-// 대시 시작 함수
 void ACPlayerCharacter::BeginDash()
 {
 	/*if (DashComponent)
@@ -286,7 +271,7 @@ bool ACPlayerCharacter::IsGrounded() const
 	return bHit;
 }
 
-void ACPlayerCharacter::Input_NextItem(const FInputActionValue& InputActionValue)
+void ACPlayerCharacter::Input_NextItem(const FInputActionValue& /*InputActionValue*/)
 {
 	if (InventoryComponent)
 	{
@@ -294,7 +279,7 @@ void ACPlayerCharacter::Input_NextItem(const FInputActionValue& InputActionValue
 	}
 }
 
-void ACPlayerCharacter::Input_PrevItem(const FInputActionValue& InputActionValue)
+void ACPlayerCharacter::Input_PrevItem(const FInputActionValue& /*InputActionValue*/)
 {
 	if (InventoryComponent)
 	{
@@ -304,7 +289,6 @@ void ACPlayerCharacter::Input_PrevItem(const FInputActionValue& InputActionValue
 
 void ACPlayerCharacter::Input_SelectSlot(const FInputActionValue& InputActionValue)
 {
-	// 1~0 키를 0~9 인덱스로 변환 (프로젝트 InputAction에서 1~10 값을 넘겨주도록 설정)
 	int32 SlotIndex = FMath::FloorToInt(InputActionValue.Get<float>()) - 1;
 	if (InventoryComponent && SlotIndex >= 0 && SlotIndex < 10)
 	{
@@ -334,39 +318,54 @@ void ACPlayerCharacter::EquipSelectedItem()
 	UnequipCurrentItem();
 
 	const FInventoryItem Item = InventoryComponent->GetSelectedItem();
-	if (Item.Quantity <= 0 || !Item.bIsEquippable || !Item.ItemClass)
-	{
+	if (Item.Quantity <= 0 || !Item.bIsEquippable || (!Item.ItemClass && !Item.ThrowableClass))
 		return;
-	}
+
+	// ThrowableClass가 지정되어 있으면 우선 사용, 없으면 일반 ItemClass 사용
+	UClass* SpawnClass = Item.ThrowableClass ? Item.ThrowableClass.Get() : Item.ItemClass.Get();
+	if (!SpawnClass) return;
 
 	FActorSpawnParameters Params;
 	Params.Owner = this;
 	Params.Instigator = this;
 
-	AActor* NewHeld = GetWorld()->SpawnActor<AActor>(Item.ItemClass, FTransform::Identity, Params);
+	AActor* NewHeld = GetWorld()->SpawnActor<AActor>(SpawnClass, FTransform::Identity, Params);
 	if (!NewHeld)
-	{
 		return;
-	}
 
-	if (USkeletalMeshComponent* CharMesh = GetMesh())
+	// 아이템별 오프셋 + 캐릭터 기본 오프셋 합성
+	const FVector FinalOffset = HoldOffset + Item.HoldOffset;
+	const FRotator FinalRot = HoldRotationOffset + Item.HoldRotationOffset;
+
+	if (ACThrowableItemBase* Throwable = Cast<ACThrowableItemBase>(NewHeld))
 	{
-		NewHeld->AttachToComponent(CharMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandSocketName);
-		NewHeld->AddActorLocalOffset(HoldOffset);
-		NewHeld->AddActorLocalRotation(HoldRotationOffset);
-
-		if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(NewHeld->GetRootComponent()))
-		{
-			Prim->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			Prim->SetSimulatePhysics(false);
-		}
-
-		HeldItemActor = NewHeld;
+		// 주입 + 장착 처리 통합
+		Throwable->InitializeFromInventoryItem(Item, InventoryComponent);
+		Throwable->SetHeld(true, this, GetMesh(), HandSocketName, FinalOffset, FinalRot);
 	}
 	else
 	{
-		NewHeld->Destroy();
+		// 일반 액터 장착 경로(기존 로직)
+		if (USkeletalMeshComponent* CharMesh = GetMesh())
+		{
+			NewHeld->AttachToComponent(CharMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandSocketName);
+			NewHeld->AddActorLocalOffset(FinalOffset);
+			NewHeld->AddActorLocalRotation(FinalRot);
+
+			if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(NewHeld->GetRootComponent()))
+			{
+				Prim->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+				Prim->SetSimulatePhysics(false);
+			}
+		}
+		else
+		{
+			NewHeld->Destroy();
+			return;
+		}
 	}
+
+	HeldItemActor = NewHeld;
 }
 
 void ACPlayerCharacter::UnequipCurrentItem()
@@ -402,7 +401,7 @@ void ACPlayerCharacter::ThrowCurrentItem()
 
 	const int32 SlotIndex = InventoryComponent->GetSelectedSlotIndex();
 	FInventoryItem Item = InventoryComponent->GetSelectedItem();
-	if (Item.Quantity <= 0 || !Item.bIsEquippable || !Item.ItemClass)
+	if (Item.Quantity <= 0 || !Item.bIsEquippable || (!Item.ItemClass && !Item.ThrowableClass))
 	{
 		return;
 	}
@@ -410,42 +409,55 @@ void ACPlayerCharacter::ThrowCurrentItem()
 	FVector Start, Dir;
 	GetAimInfo(Start, Dir);
 
-	AActor* ThrownActor = HeldItemActor;
-	HeldItemActor = nullptr;
-
-	ThrownActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-
-	if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(ThrownActor->GetRootComponent()))
+	// 분기: Throwable 기반이면 자체 Throw 사용, 아니면 기존 물리 임펄스
+	if (ACThrowableItemBase* Throwable = Cast<ACThrowableItemBase>(HeldItemActor))
 	{
-		Prim->IgnoreActorWhenMoving(this, true);
-		Prim->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		// Throw가 Detach/충돌 설정/무시시간/Fuse까지 처리
+		Throwable->Throw(Start, Dir, this);
+	}
+	else
+	{
+		// 기존 물리/프로젝타일 기반 던지기
+		AActor* ThrownActor = HeldItemActor;
+		ThrownActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
-		if (UProjectileMovementComponent* Proj = ThrownActor->FindComponentByClass<UProjectileMovementComponent>())
+		if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(ThrownActor->GetRootComponent()))
 		{
-			Proj->Velocity = Dir * ThrowImpulseStrength;
-			Proj->Activate(true);
-			Prim->SetSimulatePhysics(false);
-		}
-		else
-		{
-			Prim->SetSimulatePhysics(true);
-			Prim->AddImpulse(Dir * ThrowImpulseStrength, NAME_None, true);
-		}
+			Prim->IgnoreActorWhenMoving(this, true);
+			Prim->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
-		FTimerHandle TimerHandle;
-		GetWorldTimerManager().SetTimer(TimerHandle, [Prim, this]()
-		{
-			if (IsValid(Prim))
+			if (UProjectileMovementComponent* Proj = ThrownActor->FindComponentByClass<UProjectileMovementComponent>())
 			{
-				Prim->IgnoreActorWhenMoving(this, false);
+				Proj->Velocity = Dir * ThrowImpulseStrength;
+				Proj->Activate(true);
+				Prim->SetSimulatePhysics(false);
 			}
-		}, 0.2f, false);
+			else
+			{
+				Prim->SetSimulatePhysics(true);
+				Prim->AddImpulse(Dir * ThrowImpulseStrength, NAME_None, true);
+			}
+
+			FTimerHandle TimerHandle;
+			GetWorldTimerManager().SetTimer(TimerHandle, [Prim, this]()
+			{
+				if (IsValid(Prim))
+				{
+					Prim->IgnoreActorWhenMoving(this, false);
+				}
+			}, 0.2f, false);
+		}
 	}
 
+	// 손 비우기
+	HeldItemActor = nullptr;
+
+	// 인벤토리 차감
 	InventoryComponent->RemoveItem(SlotIndex, 1);
 
+	// 남은 동일 슬롯 아이템 자동 장착
 	const FInventoryItem After = InventoryComponent->GetItemAt(SlotIndex);
-	if (After.Quantity > 0 && After.bIsEquippable && After.ItemClass)
+	if (After.Quantity > 0 && After.bIsEquippable && (After.ItemClass || After.ThrowableClass))
 	{
 		EquipSelectedItem();
 	}
@@ -455,7 +467,6 @@ void ACPlayerCharacter::ThrowCurrentItem()
 
 void ACPlayerCharacter::UpdateStamina(float DeltaTime)
 {
-	// 달리는 중이면 소모
 	if (bisSprint)
 	{
 		const float Drain = SprintDrainPerSecond * DeltaTime;
@@ -463,7 +474,6 @@ void ACPlayerCharacter::UpdateStamina(float DeltaTime)
 		SetCurrentStamina(FMath::Max(0.f, CurrentStamina - Drain));
 		MarkStaminaUsed();
 
-		// 바닥나면 강제 종료 + 기진 상태
 		if (Before > 0.f && CurrentStamina <= 0.f)
 		{
 			bStaminaExhausted = true;
@@ -472,13 +482,11 @@ void ACPlayerCharacter::UpdateStamina(float DeltaTime)
 	}
 	else
 	{
-		// 소모 후 일정 시간 지나면 회복
 		TimeSinceLastStaminaUse += DeltaTime;
 		if (TimeSinceLastStaminaUse >= RegenDelay && CurrentStamina < MaxStamina)
 		{
 			SetCurrentStamina(FMath::Min(MaxStamina, CurrentStamina + WalkRegenPerSecond * DeltaTime));
 
-			// 임계치 이상 회복되면 기진 상태 해제
 			if (bStaminaExhausted && CurrentStamina >= ExhaustedRecoverThreshold)
 			{
 				bStaminaExhausted = false;
