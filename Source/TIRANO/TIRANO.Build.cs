@@ -18,6 +18,7 @@ public class TIRANO : ModuleRules
 			"EnhancedInput",
 			"AnimGraphRuntime",  
 			"AIModule",
+			"NavigationSystem",
 			"GameplayAbilities", "GameplayTags", "GameplayTasks",
 			"UMG"
 		});

@@ -15,10 +15,11 @@ class UCDashComponent;
 class UAbilitySystemComponent;
 class UCInventoryComponent;
 class UCStatusUI;
+class ACFlashlightItem;
+class UCBatteryHUDWidget;
 
 struct FInputActionValue;
 
-// 스태미나 변경 델리게이트(현재값, 최대값)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStaminaChanged, float, Current, float, Max);
 
 UCLASS()
@@ -163,7 +164,13 @@ private:
 	FRotator HoldRotationOffset = FRotator::ZeroRotator;
 
 	UPROPERTY(EditAnywhere, Category = "Inventory|Throw")
-	float ThrowImpulseStrength = 2500.f;
+	float ThrowImpulseStrength = 5500.f;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory|Throw", meta=(ClampMin="0.0", ClampMax="89.0"))
+	float ThrowPitchOffsetDeg = 10.0f;
+	
+	UPROPERTY(EditAnywhere, Category = "Inventory|Throw", meta=(ClampMin="0.0"))
+	float ThrowStartZOffset = 10.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Inventory|Equip")
 	bool bAutoEquipOnSlotChange = true;
@@ -175,6 +182,8 @@ private:
 
 	UFUNCTION()
 	void OnSelectedSlotChanged(int32 NewIndex);
+	UFUNCTION()
+	void OnInventoryUpdated();
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
@@ -202,6 +211,51 @@ protected:
 	UPROPERTY()
 	UCStatusUI* StatusWidget = nullptr;
 
-	// -------------Item------------
+private:
+	// 발소리 노이즈
+	UPROPERTY(EditAnywhere, Category="Noise|Footstep")
+	float FootstepIntervalWalk = 0.6f;
+
+	UPROPERTY(EditAnywhere, Category="Noise|Footstep")
+	float FootstepIntervalSprint = 0.35f;
+
+	UPROPERTY(EditAnywhere, Category="Noise|Footstep")
+	float FootstepLoudnessWalk = 0.7f;
+
+	UPROPERTY(EditAnywhere, Category="Noise|Footstep")
+	float FootstepLoudnessSprint = 1.2f;
+
+	UPROPERTY(EditAnywhere, Category="Noise|Footstep")
+	float FootstepMaxRange = 1800.f;
+
+	float FootstepTimer = 0.f;
+
+	// 배터리 아이템 ID
+	UPROPERTY(EditAnywhere, Category="Item|Flashlight")
+	FName BatteryItemId = "Item_FlashlightBattery";
+
+	UPROPERTY(EditAnywhere, Category="Item|Flashlight")
+	FName UsedBatteryItemId = "Item_FlashlightBattery_Used";
+
+	// HUD: 배터리/교체 프롬프트
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	TSubclassOf<UCBatteryHUDWidget> BatteryWidgetClass;
+
+	UPROPERTY()
+	UCBatteryHUDWidget* BatteryWidget = nullptr;
+
+	// UI 업데이트 헬퍼
+	void UpdateBatteryUI();
+	void UpdateBatteryReplacePrompt();
+	
+	// 입력
+	void OnFPressed();
+
+	void EmitFootstepIfNeeded(float DeltaSeconds);
+
+	// 헬퍼: 현재 손에 든 손전등 얻기
+	ACFlashlightItem* GetHeldFlashlight() const;
+
+
 	
 };

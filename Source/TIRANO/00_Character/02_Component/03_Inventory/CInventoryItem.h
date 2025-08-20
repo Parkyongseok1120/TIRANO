@@ -42,6 +42,15 @@ struct FInventoryItem
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FRotator HoldRotationOffset = FRotator::ZeroRotator;
 
+	// 손전등/손전등 배터리는 1로 설정하세요.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ClampMin="0"))
+	int32 MaxStackPerSlotOverride = 0;
+
+	// [신규] 배터리형 아이템(손전등 배터리)일 때 퍼센트(0~100). 다른 아이템은 무시.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ClampMin="0.0", ClampMax="100.0"))
+	float BatteryPercent = 100.f;
+
+
 	FInventoryItem()
 	{
 		ItemID = TEXT("");

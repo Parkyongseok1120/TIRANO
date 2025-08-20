@@ -5,10 +5,16 @@
 #include "00_Character/02_Component/01_Input/CGameplayTags.h"
 #include "00_Character/02_Component/CDashComponent.h"
 #include "00_Character/02_Component/03_Inventory/CInventoryComponent.h"
-#include "02_UI/CHotbarWidget.h"
-#include "02_UI/CStatusUI.h"
-#include "01_Item/CThrowableItemBase.h"
+#include "00_Character/02_Component/02_ABS/CPlayerAttributeSet.h"
 
+#include "02_UI/CHotbarWidget.h"
+#include "02_UI/CBatteryHUDWidget.h"
+#include "02_UI/CStatusUI.h"
+
+#include "01_Item/CThrowableItemBase.h"
+#include "01_Item/CFlashlightItem.h"
+
+#include "Perception/AISense_Hearing.h"
 #include "EnhancedInput/Public/InputAction.h"
 #include "GameFramework/Character.h"
 #include "Animation/AnimMontage.h"
@@ -19,7 +25,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemComponent.h"
 #include "CGameInstance.h"
-#include "00_Character/02_Component/02_ABS/CPlayerAttributeSet.h"
 
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -53,6 +58,7 @@ ACPlayerCharacter::ACPlayerCharacter()
 	bCanDoubleJump = true;
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AttributeSet = CreateDefaultSubobject<UCPlayerAttributeSet>(TEXT("AttributeSet"));
+
 }
 
 void ACPlayerCharacter::BeginPlay()
@@ -106,6 +112,8 @@ void ACPlayerCharacter::BeginPlay()
 				CLog::Log("핫바 위젯 생성 및 표시됨");
 			}
 		}
+
+		
 	}
 
 	// 상태 위젯 생성 및 캐릭터 연결
@@ -124,7 +132,33 @@ void ACPlayerCharacter::BeginPlay()
 			}
 		}
 	}
+
+	// 배터리 HUD 생성
+	if (BatteryWidgetClass)
+	{
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			if (PC->IsLocalPlayerController())
+			{
+				BatteryWidget = CreateWidget<UCBatteryHUDWidget>(PC, BatteryWidgetClass);
+				if (BatteryWidget)
+				{
+					BatteryWidget->AddToViewport(1);
+					UpdateBatteryUI();
+					UpdateBatteryReplacePrompt();
+				}
+			}
+		}
+	}
+
+	// 인벤토리 변경 이벤트에 UI 갱신 연결(파라미터 없는 델리게이트에 맞게 전용 핸들러 사용)
+	if (InventoryComponent)
+	{
+		InventoryComponent->OnInventoryUpdated.AddDynamic(this, &ACPlayerCharacter::OnInventoryUpdated);
+	}
+	
 }
+
 
 // Called every frame
 void ACPlayerCharacter::Tick(float DeltaTime)
@@ -132,6 +166,9 @@ void ACPlayerCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateStamina(DeltaTime);
+	UpdateBatteryUI();
+	EmitFootstepIfNeeded(DeltaTime);
+
 }
 
 // Called to bind functionality to input
@@ -144,13 +181,8 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Move, ETriggerEvent::Triggered, this, &ACPlayerCharacter::Input_Move);
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Look, ETriggerEvent::Triggered, this, &ACPlayerCharacter::Input_Look);
-	
-	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Mouse_Right, ETriggerEvent::Started, this, &ACPlayerCharacter::BeginZoom);
-	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Mouse_Right, ETriggerEvent::Completed, this, &ACPlayerCharacter::EndZoom);
 
-	// 대시/점프/스프린트
-	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Dash, ETriggerEvent::Started, this, &ACPlayerCharacter::BeginDash);
-	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Jump, ETriggerEvent::Started, this, &ACPlayerCharacter::Jump);
+	// 스프린트
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Sprint, ETriggerEvent::Started, this, &ACPlayerCharacter::BeginSprint);
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Sprint, ETriggerEvent::Completed, this, &ACPlayerCharacter::EndSprint);
 
@@ -161,10 +193,72 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 	// 던지기
 	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Throw, ETriggerEvent::Started, this, &ACPlayerCharacter::ThrowCurrentItem);
+	CEnhancedInputComponent->BindActionByTag(InputConfig, CGameplayTags::InputTag_Interaction, ETriggerEvent::Started, this, &ACPlayerCharacter::OnFPressed);
+
 }
 
-void ACPlayerCharacter::BeginZoom() {}
-void ACPlayerCharacter::EndZoom() {}
+void ACPlayerCharacter::OnFPressed()
+{
+	const int32 SlotIdx = InventoryComponent ? InventoryComponent->GetSelectedSlotIndex() : -1;
+	const FInventoryItem Selected = InventoryComponent ? InventoryComponent->GetSelectedItem() : FInventoryItem();
+
+	ACFlashlightItem* Flashlight = GetHeldFlashlight();
+
+	// 1) 선택 슬롯이 배터리이고, 손전등을 들고 있다면: 배터리 교체
+	if (Flashlight && Selected.Quantity > 0 && Selected.ItemID == BatteryItemId.ToString())
+	{
+		// 인벤토리에 저장되어 있는 배터리 퍼센트와 손전등의 배터리 퍼센트를 스왑
+		FInventoryItem NewSlotItem = Selected; // 복사 후 수정
+		const float OldFlashlightBattery = Flashlight->GetBatteryPercent();
+		const float NewBatteryFromInventory = FMath::Clamp(NewSlotItem.BatteryPercent, 0.f, 100.f);
+
+		Flashlight->SetBatteryPercent(NewBatteryFromInventory);
+		NewSlotItem.BatteryPercent = OldFlashlightBattery;
+
+		// 슬롯의 아이템을 교체(같은 배터리 아이디 유지, 퍼센트만 갱신)
+		if (InventoryComponent && SlotIdx >= 0)
+		{
+			InventoryComponent->SetItemAt(SlotIdx, NewSlotItem);
+		}
+
+		UpdateBatteryUI();
+		UpdateBatteryReplacePrompt();
+		// UI 갱신은 OnInventoryUpdated 바인딩으로 처리됨
+		return;
+	}
+
+	// 2) 그렇지 않으면: 손전등이 들려 있으면 토글
+	if (Flashlight)
+	{
+		Flashlight->Toggle();
+	}
+}
+
+ACFlashlightItem* ACPlayerCharacter::GetHeldFlashlight() const
+{
+	return HeldItemActor ? Cast<ACFlashlightItem>(HeldItemActor) : nullptr;
+}
+
+
+
+
+void ACPlayerCharacter::EmitFootstepIfNeeded(float DeltaSeconds)
+{
+	// 간단한 속도 기반(달리기/걷기) 발소리
+	const float Speed2D = GetVelocity().Size2D();
+	const bool bMoving = Speed2D > 10.f;
+	if (!bMoving) { FootstepTimer = 0.f; return; }
+
+	FootstepTimer += DeltaSeconds;
+	const bool bSprinting = bisSprint; // 기존 변수 사용
+	const float Interval = bSprinting ? FootstepIntervalSprint : FootstepIntervalWalk;
+	if (FootstepTimer >= Interval)
+	{
+		FootstepTimer = 0.f;
+		const float Loud = bSprinting ? FootstepLoudnessSprint : FootstepLoudnessWalk;
+		UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), Loud, this, FootstepMaxRange, TEXT("Footstep"));
+	}
+}
 
 void ACPlayerCharacter::Input_Move(const FInputActionValue& InputActionValue)
 {
@@ -309,8 +403,18 @@ void ACPlayerCharacter::OnSelectedSlotChanged(int32 /*NewIndex*/)
 	{
 		EquipSelectedItem();
 	}
+	UpdateBatteryUI();
+	UpdateBatteryReplacePrompt();
 }
 
+// 파라미터 없는 인벤토리 갱신 핸들러
+void ACPlayerCharacter::OnInventoryUpdated()
+{
+	UpdateBatteryUI();
+	UpdateBatteryReplacePrompt();
+}
+
+// EquipSelectedItem 수정: 손전등일 때도 일반 장착 경로를 사용하되 AttachToHand 호출
 void ACPlayerCharacter::EquipSelectedItem()
 {
 	if (!InventoryComponent) return;
@@ -319,9 +423,13 @@ void ACPlayerCharacter::EquipSelectedItem()
 
 	const FInventoryItem Item = InventoryComponent->GetSelectedItem();
 	if (Item.Quantity <= 0 || !Item.bIsEquippable || (!Item.ItemClass && !Item.ThrowableClass))
+	{
+		UpdateBatteryUI();
+		UpdateBatteryReplacePrompt();
 		return;
+	}
 
-	// ThrowableClass가 지정되어 있으면 우선 사용, 없으면 일반 ItemClass 사용
+	// ThrowableClass 우선, 없으면 일반 ItemClass 사용
 	UClass* SpawnClass = Item.ThrowableClass ? Item.ThrowableClass.Get() : Item.ItemClass.Get();
 	if (!SpawnClass) return;
 
@@ -337,15 +445,21 @@ void ACPlayerCharacter::EquipSelectedItem()
 	const FVector FinalOffset = HoldOffset + Item.HoldOffset;
 	const FRotator FinalRot = HoldRotationOffset + Item.HoldRotationOffset;
 
-	if (ACThrowableItemBase* Throwable = Cast<ACThrowableItemBase>(NewHeld))
+	// 손전등이면 전용 헬퍼로 부착
+	if (ACFlashlightItem* Flashlight = Cast<ACFlashlightItem>(NewHeld))
 	{
-		// 주입 + 장착 처리 통합
-		Throwable->InitializeFromInventoryItem(Item, InventoryComponent);
+		Flashlight->AttachToHand(GetMesh(), HandSocketName, FinalOffset, FinalRot);
+
+		// 인벤토리의 배터리 아이템을 자동으로 읽어 끼우지는 않음(유저가 F로 교체).
+	}
+	else if (ACThrowableItemBase* Throwable = Cast<ACThrowableItemBase>(NewHeld))
+	{
+		// 던질 수 있는 아이템
 		Throwable->SetHeld(true, this, GetMesh(), HandSocketName, FinalOffset, FinalRot);
 	}
 	else
 	{
-		// 일반 액터 장착 경로(기존 로직)
+		// 일반 액터 장착 경로
 		if (USkeletalMeshComponent* CharMesh = GetMesh())
 		{
 			NewHeld->AttachToComponent(CharMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandSocketName);
@@ -366,6 +480,10 @@ void ACPlayerCharacter::EquipSelectedItem()
 	}
 
 	HeldItemActor = NewHeld;
+
+	// UI 갱신
+	UpdateBatteryUI();
+	UpdateBatteryReplacePrompt();
 }
 
 void ACPlayerCharacter::UnequipCurrentItem()
@@ -375,6 +493,10 @@ void ACPlayerCharacter::UnequipCurrentItem()
 		HeldItemActor->Destroy();
 		HeldItemActor = nullptr;
 	}
+
+	// UI 갱신
+	UpdateBatteryUI();
+	UpdateBatteryReplacePrompt();
 }
 
 void ACPlayerCharacter::GetAimInfo(FVector& OutStart, FVector& OutDir) const
@@ -389,6 +511,12 @@ void ACPlayerCharacter::GetAimInfo(FVector& OutStart, FVector& OutDir) const
 	{
 		const FVector HandLoc = CharMesh->GetSocketLocation(HandSocketName);
 		OutStart = HandLoc + OutDir * 20.f;
+	}
+
+	// [추가] 시작 위치를 살짝 위로 올려서 시야/충돌 간섭 감소 + 초기 상승 느낌
+	if (ThrowStartZOffset > 0.f)
+	{
+		OutStart += FVector(0, 0, ThrowStartZOffset);
 	}
 }
 
@@ -408,6 +536,15 @@ void ACPlayerCharacter::ThrowCurrentItem()
 
 	FVector Start, Dir;
 	GetAimInfo(Start, Dir);
+
+	// [추가] 던질 방향을 '위로' 피치 오프셋 적용
+	if (ThrowPitchOffsetDeg > 0.f)
+	{
+		FRotator UpRot = Dir.Rotation();
+		UpRot.Pitch -= ThrowPitchOffsetDeg; // UE에서 Pitch를 줄이면 위로 향함
+		Dir = UpRot.Vector();
+	}
+
 
 	// 분기: Throwable 기반이면 자체 Throw 사용, 아니면 기존 물리 임펄스
 	if (ACThrowableItemBase* Throwable = Cast<ACThrowableItemBase>(HeldItemActor))
@@ -513,3 +650,37 @@ void ACPlayerCharacter::SetCurrentStamina(float NewValue)
 		CurrentStamina = NewValue;
 	}
 }
+
+void ACPlayerCharacter::UpdateBatteryUI()
+{
+	if (!BatteryWidget) return;
+
+	if (ACFlashlightItem* Flashlight = GetHeldFlashlight())
+	{
+		BatteryWidget->SetBatteryPercent(Flashlight->GetBatteryPercent());
+	}
+	else
+	{
+		// 손전등 없으면 0%로 표시하거나 필요 시 숨김 처리
+		BatteryWidget->SetBatteryPercent(0.f);
+	}
+}
+
+void ACPlayerCharacter::UpdateBatteryReplacePrompt()
+{
+	if (!BatteryWidget || !InventoryComponent) return;
+
+	const FInventoryItem Selected = InventoryComponent->GetSelectedItem();
+	const bool bIsBatterySelected = (Selected.Quantity > 0 && Selected.ItemID == BatteryItemId.ToString());
+	const bool bHasFlashlight = (GetHeldFlashlight() != nullptr);
+
+	if (bIsBatterySelected && bHasFlashlight)
+	{
+		BatteryWidget->ShowReplacePrompt(true, Selected.BatteryPercent);
+	}
+	else
+	{
+		BatteryWidget->ShowReplacePrompt(false);
+	}
+}
+
