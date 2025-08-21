@@ -3,13 +3,13 @@
 #include "NavigationSystem.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/SphereComponent.h"
+#include "Components/CapsuleComponent.h"        // 캡슐 반경 조회
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Kismet/GameplayStatics.h"
 #include "00_Character/CPlayerCharacter.h"
 #include "Navigation/PathFollowingComponent.h"
-
 
 AEnemyCharacter::AEnemyCharacter()
 {
@@ -18,7 +18,14 @@ AEnemyCharacter::AEnemyCharacter()
 	KillRange = CreateDefaultSubobject<USphereComponent>(TEXT("KillRange"));
 	KillRange->SetupAttachment(GetRootComponent());
 	KillRange->SetSphereRadius(120.f);
-	KillRange->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+
+	// Trigger로 명확히 설정: Pawn만 Overlap
+	KillRange->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	KillRange->SetCollisionObjectType(ECC_WorldDynamic);
+	KillRange->SetCollisionResponseToAllChannels(ECR_Ignore);
+	KillRange->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	KillRange->SetGenerateOverlapEvents(true);
+
 	KillRange->OnComponentBeginOverlap.AddDynamic(this, &AEnemyCharacter::OnKillRangeBeginOverlap);
 
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
@@ -29,6 +36,8 @@ void AEnemyCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	CachedAI = Cast<AEnemyAIController>(GetController());
+	SetupKillRangeCollision();
+
 	SetState(EEnemyState::Idle);
 	StartRandomPatrol();
 }
@@ -47,11 +56,9 @@ void AEnemyCharacter::Tick(float DeltaSeconds)
 	}
 }
 
-
 void AEnemyCharacter::TickStunned(float /*DeltaSeconds*/)
 {
 	// 스턴 상태에서의 프레임별 처리(필요 시 확장)
-	// 현재는 스턴 해제는 타이머로 관리됨(EnterStunned에서 설정)
 }
 
 void AEnemyCharacter::HandlePerception(AActor* Actor, const FAIStimulus& Stimulus)
@@ -60,15 +67,18 @@ void AEnemyCharacter::HandlePerception(AActor* Actor, const FAIStimulus& Stimulu
 
 	if (Stimulus.Type == UAISense::GetSenseID(UAISense_Sight::StaticClass()))
 	{
-		// Player visible -> chase
+		// Player visible -> chase (단, 스턴/처형 중에는 제외)
 		if (ACPlayerCharacter* Player = Cast<ACPlayerCharacter>(Actor))
 		{
-			EnterChase(Player);
+			if (State != EEnemyState::Stunned && State != EEnemyState::Executing)
+			{
+				EnterChase(Player);
+			}
 		}
 	}
 	else if (Stimulus.Type == UAISense::GetSenseID(UAISense_Hearing::StaticClass()))
 	{
-		// 소리듣는 기능 -> 이미 추격하지 않는 한 의심스럽게 그 위치로 이동합니다
+		// 소리 -> (추격/처형 중이 아니면) 의심 위치로 이동
 		if (State != EEnemyState::Chasing && State != EEnemyState::Executing)
 		{
 			EnterSuspicious(Stimulus.StimulusLocation);
@@ -76,10 +86,11 @@ void AEnemyCharacter::HandlePerception(AActor* Actor, const FAIStimulus& Stimulu
 	}
 }
 
-void AEnemyCharacter::NotifyShinedByFlashlight(float Intensity, const FVector& /*FromLocation*/)
+void AEnemyCharacter::NotifyShinedByFlashlight(float Intensity, const FVector& FromLocation)
 {
-	// 기절한 상태로 진입하고 이미 기절한 상태인 경우 시간 연장
-	const float Duration = StunBaseDuration + FMath::Clamp(Intensity * 0.5f, 0.f, 1.f);
+	// 기절 시간 = 기본 + 강도 기반 가산 + 라이트를 꺼도 유지할 추가 홀드 시간
+	LastStunSource = FromLocation;
+	const float Duration = StunBaseDuration + FMath::Clamp(Intensity * 0.5f, 0.f, 1.f) + PostLightOffHoldSeconds;
 	EnterStunned(Duration);
 }
 
@@ -108,12 +119,59 @@ void AEnemyCharacter::UpdateSpeedForState()
 	}
 }
 
+bool AEnemyCharacter::ChooseNewPatrolGoal(FVector& OutGoal) const
+{
+	const UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
+	if (!NavSys) return false;
+
+	const FVector Origin = GetActorLocation();
+	FNavLocation Candidate;
+	for (int32 i = 0; i < 20; ++i) // 최대 20회 시도
+	{
+		if (NavSys->GetRandomReachablePointInRadius(Origin, PatrolRadius, Candidate))
+		{
+			if (FVector::Dist2D(Origin, Candidate.Location) >= MinPatrolDistance)
+			{
+				OutGoal = Candidate.Location;
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool AEnemyCharacter::HasReachedLocation2D(const FVector& Loc, float Tolerance) const
+{
+	return FVector::Dist2D(GetActorLocation(), Loc) <= Tolerance;
+}
+
 void AEnemyCharacter::TickIdle(float /*DeltaSeconds*/)
 {
-	// 현재 이동 목표에 도달하면 다음 선택.
-	if (CachedAI)
+	// 목표가 없거나 도달하면 즉시 다음 목적지 선택
+	if (CurrentPatrolGoal.IsNearlyZero() || HasReachedLocation2D(CurrentPatrolGoal, PatrolAcceptanceRadius))
 	{
-	// 컨트롤러가 MoveTo를 처리합니다. 주기적으로 새로운 순찰 지점을 설정할 수 있습니다
+		StartRandomPatrol();
+		return;
+	}
+
+	// 경로 추종 상태가 Idle이면 새 목적지 선택(길 막힘 등 복구)
+	if (CachedAI && CachedAI->GetPathFollowingComponent())
+	{
+		const auto Status = CachedAI->GetPathFollowingComponent()->GetStatus();
+		if (Status == EPathFollowingStatus::Idle)
+		{
+			StartRandomPatrol();
+		}
+	}
+}
+
+void AEnemyCharacter::TickSuspicious(float /*DeltaSeconds*/)
+{
+	// 의심 지점까지 계속 이동. 도달 여부는 bReachedSuspiciousPoint로 판정
+	// 상태 해제(Idle 전환)는 EnterSuspicious에서 건 타이머로 처리
+	if (!bReachedSuspiciousPoint())
+	{
+		MoveToLocation(SuspiciousPoint);
 	}
 }
 
@@ -122,14 +180,11 @@ void AEnemyCharacter::StartRandomPatrol()
 	if (!CachedAI) CachedAI = Cast<AEnemyAIController>(GetController());
 	if (!CachedAI) return;
 
-	const UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
-	if (!NavSys) return;
-
-	FNavLocation RandomPt;
-	const bool bFound = NavSys->GetRandomReachablePointInRadius(GetActorLocation(), PatrolRadius, RandomPt);
-	if (bFound)
+	FVector NewGoal;
+	if (ChooseNewPatrolGoal(NewGoal))
 	{
-		MoveToLocation(RandomPt.Location);
+		CurrentPatrolGoal = NewGoal;
+		MoveToLocation(CurrentPatrolGoal);
 	}
 }
 
@@ -138,7 +193,7 @@ void AEnemyCharacter::MoveToLocation(const FVector& Dest)
 	if (!CachedAI) return;
 	FAIMoveRequest Req;
 	Req.SetGoalLocation(Dest);
-	Req.SetAcceptanceRadius(100.f);
+	Req.SetAcceptanceRadius(PatrolAcceptanceRadius);
 	CachedAI->MoveTo(Req);
 }
 
@@ -157,8 +212,8 @@ void AEnemyCharacter::EnterSuspicious(const FVector& NoiseLocation)
 	SetState(EEnemyState::Suspicious);
 	MoveToLocation(SuspiciousPoint);
 
-	// 해당 위치 근처에 플레이어가 보이지 않으면 타임아웃 후 유휴 상태로 돌아갑니다
-    GetWorldTimerManager().ClearTimer(SuspiciousTimerHandle);
+	// 해당 위치 근처에 플레이어가 보이지 않으면 타임아웃 후 유휴 상태로 복귀
+	GetWorldTimerManager().ClearTimer(SuspiciousTimerHandle);
 	GetWorldTimerManager().SetTimer(SuspiciousTimerHandle, [this]()
 	{
 		if (State == EEnemyState::Suspicious)
@@ -174,6 +229,7 @@ void AEnemyCharacter::ExitSuspicious(bool bToIdle)
 	if (bToIdle)
 	{
 		SetState(EEnemyState::Idle);
+		CurrentPatrolGoal = FVector::ZeroVector; // 다음 틱에 새 목표 선택
 		StartRandomPatrol();
 	}
 }
@@ -181,14 +237,6 @@ void AEnemyCharacter::ExitSuspicious(bool bToIdle)
 bool AEnemyCharacter::bReachedSuspiciousPoint() const
 {
 	return FVector::Dist2D(GetActorLocation(), SuspiciousPoint) <= SuspiciousAcceptanceRadius;
-}
-
-void AEnemyCharacter::TickSuspicious(float /*DeltaSeconds*/)
-{
-	if (bReachedSuspiciousPoint())
-	{
-		// 타이머를 통해 대기함.(EnterSuspicious에서 처리)
-	}
 }
 
 void AEnemyCharacter::EnterChase(AActor* Target)
@@ -205,6 +253,7 @@ void AEnemyCharacter::ExitChase(bool bToIdle)
 	if (bToIdle)
 	{
 		SetState(EEnemyState::Idle);
+		CurrentPatrolGoal = FVector::ZeroVector;
 		StartRandomPatrol();
 	}
 }
@@ -215,43 +264,58 @@ void AEnemyCharacter::TickChasing(float /*DeltaSeconds*/)
 	{
 		MoveToActor(ChaseTarget);
 
-		// 시력을 잃고 마지막으로 알려진 위치에서 멀리 떨어진 경우 목표 마지막 위치 주변에서 의심스러운 위치로 다운그레이드합니다
+		// 시야 상실 시 마지막 위치로 의심 전환
 		if (!HasLineOfSightToActor(ChaseTarget))
 		{
 			EnterSuspicious(ChaseTarget->GetActorLocation());
+		}
+
+		// [페일세이프] 거리 기반 킬 체크
+		if (bUseDistanceKillFallback && State != EEnemyState::Stunned && State != EEnemyState::Executing)
+		{
+			const float MyKillR = KillRange ? KillRange->GetScaledSphereRadius() : 120.f;
+
+			float PlayerR = 0.f;
+			if (const ACharacter* PlayerChar = Cast<ACharacter>(ChaseTarget))
+			{
+				if (const UCapsuleComponent* Capsule = PlayerChar->GetCapsuleComponent())
+				{
+					PlayerR = Capsule->GetScaledCapsuleRadius();
+				}
+			}
+
+			const float Dist2D = FVector::Dist2D(GetActorLocation(), ChaseTarget->GetActorLocation());
+			if (Dist2D <= (MyKillR + PlayerR))
+			{
+				TryExecutePlayer(ChaseTarget);
+			}
 		}
 	}
 }
 
 void AEnemyCharacter::EnterStunned(float Duration)
 {
-	if (State == EEnemyState::Executing) return;
-
-	SetState(EEnemyState::Stunned);
-	// 플레이어 애니메이션 몽타주 진입 위치
-
-	// 시간 경과 후 아무 일도 일어나지 않으면 대기 상태로 전환합니다
-	FTimerHandle Tmp;
-	GetWorldTimerManager().SetTimer(Tmp, [this]()
+	if (State != EEnemyState::Stunned)
 	{
-		if (State == EEnemyState::Stunned)
-		{
-			ExitStunned();
-		}
-	}, Duration, false);
+		SetState(EEnemyState::Stunned);
+	}
+
+	// 스턴 타이머 갱신(연장)
+	GetWorldTimerManager().ClearTimer(StunExitTimerHandle);
+	GetWorldTimerManager().SetTimer(StunExitTimerHandle, this, &AEnemyCharacter::ExitStunned, Duration, false);
 }
 
 void AEnemyCharacter::ExitStunned()
 {
-	// 재개: 플레이어가 보이면 추격하고, 그렇지 않으면 유휴 상태입니다
-	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (PlayerPawn && HasLineOfSightToActor(PlayerPawn))
+	// 스턴 해제 후 즉시 추격 금지: 의심 또는 대기
+	if (bPostStunGoSuspicious && !LastStunSource.IsNearlyZero())
 	{
-		EnterChase(PlayerPawn);
+		EnterSuspicious(LastStunSource);
 	}
 	else
 	{
 		SetState(EEnemyState::Idle);
+		CurrentPatrolGoal = FVector::ZeroVector;
 		StartRandomPatrol();
 	}
 }
@@ -281,17 +345,27 @@ void AEnemyCharacter::OnKillRangeBeginOverlap(UPrimitiveComponent* /*Overlapped*
 
 void AEnemyCharacter::TryExecutePlayer(AActor* PlayerActor)
 {
+	if (!IsValid(PlayerActor)) return;
+
 	SetState(EEnemyState::Executing);
 
-	// TODO: Play execution animation montage here
-	// 짧은 지연 후 게임 종료 알림
+	// TODO: 처형 연출/애니메이션
 	FTimerHandle Tmp;
-	GetWorldTimerManager().SetTimer(Tmp, [this, PlayerActor]()
+	GetWorldTimerManager().SetTimer(Tmp, [this]()
 	{
-		// 게임 오버 트리거; 입력 비활성화, UI 표시 등.
 		if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
 		{
 			PC->SetPause(true);
 		}
 	}, 1.2f, false);
+}
+
+void AEnemyCharacter::SetupKillRangeCollision()
+{
+	if (!KillRange) return;
+	KillRange->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	KillRange->SetCollisionObjectType(ECC_WorldDynamic);
+	KillRange->SetCollisionResponseToAllChannels(ECR_Ignore);
+	KillRange->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	KillRange->SetGenerateOverlapEvents(true);
 }
