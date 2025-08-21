@@ -17,6 +17,7 @@ class UCInventoryComponent;
 class UCStatusUI;
 class ACFlashlightItem;
 class UCBatteryHUDWidget;
+class USphereComponent; // 추가: 전용 오버랩 스피어
 
 struct FInputActionValue;
 
@@ -256,6 +257,10 @@ private:
 	// 헬퍼: 현재 손에 든 손전등 얻기
 	ACFlashlightItem* GetHeldFlashlight() const;
 
+	// ===== Enemy KillRange 전용 오버랩 스피어 =====
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Collision|KillOverlap", meta=(AllowPrivateAccess="true"))
+	USphereComponent* KillOverlapSphere = nullptr;
 
-	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Collision|KillOverlap", meta=(ClampMin="10.0", AllowPrivateAccess="true"))
+	float KillOverlapRadius = 45.f; // 캡슐 반경(보통 42)보다 약간 크게
 };

@@ -21,6 +21,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/SphereComponent.h"         
+#include "Components/CapsuleComponent.h"    
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemComponent.h"
@@ -44,6 +46,20 @@ ACPlayerCharacter::ACPlayerCharacter()
 	PlayerCamera->SetupAttachment(SpringArm);
 	DashComponent = CreateDefaultSubobject<UCDashComponent>(TEXT("DashComponent"));
 	InventoryComponent = CreateDefaultSubobject<UCInventoryComponent>(TEXT("InventoryComponent"));
+	// ===== Enemy KillRange 전용 오버랩 스피어 생성 =====
+	KillOverlapSphere = CreateDefaultSubobject<USphereComponent>(TEXT("KillOverlapSphere"));
+	KillOverlapSphere->SetupAttachment(GetCapsuleComponent()); // 캡슐에 부착
+	KillOverlapSphere->SetSphereRadius(KillOverlapRadius);
+	KillOverlapSphere->SetRelativeLocation(FVector::ZeroVector);
+	KillOverlapSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	// Enemy KillRange는 WorldDynamic + Pawn Overlap.
+	// 우리 스피어는 Pawn 타입으로, WorldDynamic에 Overlap으로 응답해 상호 Overlap 달성.
+	KillOverlapSphere->SetCollisionObjectType(ECC_Pawn);
+	KillOverlapSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+	KillOverlapSphere->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
+	KillOverlapSphere->SetGenerateOverlapEvents(true);
+	KillOverlapSphere->SetCanEverAffectNavigation(false);
+	KillOverlapSphere->SetHiddenInGame(true); // 시각적으로 숨김
 
 	GetMesh()->SetRelativeLocation(FVector(0, 0, -90));
 	GetMesh()->SetRelativeRotation(FRotator(0, -90, 0));
@@ -112,8 +128,6 @@ void ACPlayerCharacter::BeginPlay()
 				CLog::Log("핫바 위젯 생성 및 표시됨");
 			}
 		}
-
-		
 	}
 
 	// 상태 위젯 생성 및 캐릭터 연결
@@ -156,7 +170,6 @@ void ACPlayerCharacter::BeginPlay()
 	{
 		InventoryComponent->OnInventoryUpdated.AddDynamic(this, &ACPlayerCharacter::OnInventoryUpdated);
 	}
-	
 }
 
 
