@@ -1,6 +1,7 @@
 # Rider & Visual Studio 2015 user specific files
 .vs/
 .idea/
+.svn/
 Content/
 
 # Compiled Object files
