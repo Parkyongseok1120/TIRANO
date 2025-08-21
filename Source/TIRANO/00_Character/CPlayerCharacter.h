@@ -17,7 +17,7 @@ class UCInventoryComponent;
 class UCStatusUI;
 class ACFlashlightItem;
 class UCBatteryHUDWidget;
-class USphereComponent; // 추가: 전용 오버랩 스피어
+class USphereComponent;
 
 struct FInputActionValue;
 
@@ -185,6 +185,10 @@ private:
 	void OnSelectedSlotChanged(int32 NewIndex);
 	UFUNCTION()
 	void OnInventoryUpdated();
+
+	// Held 아이템이 파괴되었을 때 포인터 정리
+	UFUNCTION()
+	void OnHeldActorDestroyed(AActor* DestroyedActor);
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")

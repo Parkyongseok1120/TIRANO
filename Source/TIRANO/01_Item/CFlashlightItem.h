@@ -2,14 +2,18 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "00_Character/02_Component/03_Inventory/CInventoryItem.h"
 #include "CFlashlightItem.generated.h"
 
 class USpotLightComponent;
+class UCInventoryComponent;
+class ACPlayerCharacter;
 
 /**
  * 손전등 아이템(Actor). 인벤토리에서 선택 시 손에 장착되어 조작 가능.
  * - 배터리 퍼센트 보관 및 소모
  * - 켜짐 상태에서 주기적으로 적을 조사하여 빈사(스턴) 유도
+ * - 배터리 0%가 되면 인벤토리에서 손전등 자체 제거
  */
 UCLASS()
 class TIRANO_API ACFlashlightItem : public AActor
@@ -25,6 +29,9 @@ public:
 	// 장착/해제 시 소켓에 부착을 도와주는 헬퍼(선택)
 	UFUNCTION(BlueprintCallable, Category="Flashlight|Attach")
 	void AttachToHand(USceneComponent* Mesh, FName SocketName, const FVector& Offset = FVector::ZeroVector, const FRotator& RotOffset = FRotator::ZeroRotator);
+
+	// 인벤토리 메타 초기화(플레이어가 장착할 때 호출)
+	void InitializeFromInventoryItem(const FInventoryItem& InItem, UCInventoryComponent* InInventory, ACPlayerCharacter* InOwner);
 
 	// 켜기/끄기/토글
 	UFUNCTION(BlueprintCallable, Category="Flashlight")
@@ -79,6 +86,19 @@ protected:
 
 	bool bOn = false;
 
+	// 인벤토리/소유자 참조
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Flashlight|Inventory")
+	FString ItemIDForInventory;
+
+	TWeakObjectPtr<UCInventoryComponent> OwnerInventory;
+	TWeakObjectPtr<ACPlayerCharacter> OwningPlayer;
+
+	// 중복 제거 방지
+	bool bPendingRemovalOnDeplete = false;
+
 	// 적 스턴 처리
 	void ApplyStunCone();
+
+	// 배터리 0% 시 인벤토리에서 손전등 제거 + 자신 파괴
+	void RemoveFromInventoryOnDeplete();
 };

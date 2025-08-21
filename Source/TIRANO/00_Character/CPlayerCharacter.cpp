@@ -217,26 +217,26 @@ void ACPlayerCharacter::OnFPressed()
 
 	ACFlashlightItem* Flashlight = GetHeldFlashlight();
 
-	// 1) 선택 슬롯이 배터리이고, 손전등을 들고 있다면: 배터리 교체
+	// 1) 선택 슬롯이 '배터리'이고, 손전등을 들고 있다면: 배터리 '소비'
 	if (Flashlight && Selected.Quantity > 0 && Selected.ItemID == BatteryItemId.ToString())
 	{
-		// 인벤토리에 저장되어 있는 배터리 퍼센트와 손전등의 배터리 퍼센트를 스왑
-		FInventoryItem NewSlotItem = Selected; // 복사 후 수정
-		const float OldFlashlightBattery = Flashlight->GetBatteryPercent();
-		const float NewBatteryFromInventory = FMath::Clamp(NewSlotItem.BatteryPercent, 0.f, 100.f);
-
+		// 선택 슬롯의 배터리 퍼센트를 손전등에 장착
+		const float NewBatteryFromInventory = FMath::Clamp(Selected.BatteryPercent, 0.f, 100.f);
 		Flashlight->SetBatteryPercent(NewBatteryFromInventory);
-		NewSlotItem.BatteryPercent = OldFlashlightBattery;
 
-		// 슬롯의 아이템을 교체(같은 배터리 아이디 유지, 퍼센트만 갱신)
+		// 인벤토리에서 선택 슬롯 배터리 1개 제거
 		if (InventoryComponent && SlotIdx >= 0)
 		{
-			InventoryComponent->SetItemAt(SlotIdx, NewSlotItem);
+			InventoryComponent->RemoveItem(SlotIdx, 1);
+
+			// 안전 확인(디버그): 제거 후 슬롯 상태 로그
+			const FInventoryItem After = InventoryComponent->GetItemAt(SlotIdx);
+			CLog::Log(FString::Printf(TEXT("[BatteryUse] Slot %d after remove -> ID:%s, Qty:%d"),
+				SlotIdx, *After.ItemID, After.Quantity));
 		}
 
 		UpdateBatteryUI();
 		UpdateBatteryReplacePrompt();
-		// UI 갱신은 OnInventoryUpdated 바인딩으로 처리됨
 		return;
 	}
 
@@ -442,7 +442,6 @@ void ACPlayerCharacter::EquipSelectedItem()
 		return;
 	}
 
-	// ThrowableClass 우선, 없으면 일반 ItemClass 사용
 	UClass* SpawnClass = Item.ThrowableClass ? Item.ThrowableClass.Get() : Item.ItemClass.Get();
 	if (!SpawnClass) return;
 
@@ -454,25 +453,21 @@ void ACPlayerCharacter::EquipSelectedItem()
 	if (!NewHeld)
 		return;
 
-	// 아이템별 오프셋 + 캐릭터 기본 오프셋 합성
 	const FVector FinalOffset = HoldOffset + Item.HoldOffset;
 	const FRotator FinalRot = HoldRotationOffset + Item.HoldRotationOffset;
 
-	// 손전등이면 전용 헬퍼로 부착
 	if (ACFlashlightItem* Flashlight = Cast<ACFlashlightItem>(NewHeld))
 	{
 		Flashlight->AttachToHand(GetMesh(), HandSocketName, FinalOffset, FinalRot);
-
-		// 인벤토리의 배터리 아이템을 자동으로 읽어 끼우지는 않음(유저가 F로 교체).
+		// 인벤토리/아이템ID/소유자 정보 넘겨서 방전 시 제거 처리
+		Flashlight->InitializeFromInventoryItem(Item, InventoryComponent, this);
 	}
 	else if (ACThrowableItemBase* Throwable = Cast<ACThrowableItemBase>(NewHeld))
 	{
-		// 던질 수 있는 아이템
 		Throwable->SetHeld(true, this, GetMesh(), HandSocketName, FinalOffset, FinalRot);
 	}
 	else
 	{
-		// 일반 액터 장착 경로
 		if (USkeletalMeshComponent* CharMesh = GetMesh())
 		{
 			NewHeld->AttachToComponent(CharMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, HandSocketName);
@@ -494,9 +489,25 @@ void ACPlayerCharacter::EquipSelectedItem()
 
 	HeldItemActor = NewHeld;
 
-	// UI 갱신
+	// Held 액터 파괴 시 포인터 정리
+	if (HeldItemActor)
+	{
+		HeldItemActor->OnDestroyed.AddDynamic(this, &ACPlayerCharacter::OnHeldActorDestroyed);
+	}
+
 	UpdateBatteryUI();
 	UpdateBatteryReplacePrompt();
+}
+
+void ACPlayerCharacter::OnHeldActorDestroyed(AActor* DestroyedActor)
+{
+	// 손에 들고 있던 액터가 파괴되면 포인터 정리 및 UI 갱신
+	if (DestroyedActor == HeldItemActor)
+	{
+		HeldItemActor = nullptr;
+		UpdateBatteryUI();
+		UpdateBatteryReplacePrompt();
+	}
 }
 
 void ACPlayerCharacter::UnequipCurrentItem()
@@ -536,6 +547,12 @@ void ACPlayerCharacter::GetAimInfo(FVector& OutStart, FVector& OutDir) const
 void ACPlayerCharacter::ThrowCurrentItem()
 {
 	if (!InventoryComponent || !HeldItemActor)
+	{
+		return;
+	}
+
+	// 손전등은 좌클릭으로 버려지지 않도록 막음
+	if (Cast<ACFlashlightItem>(HeldItemActor))
 	{
 		return;
 	}
@@ -696,4 +713,3 @@ void ACPlayerCharacter::UpdateBatteryReplacePrompt()
 		BatteryWidget->ShowReplacePrompt(false);
 	}
 }
-

@@ -127,14 +127,23 @@ void UCInventoryComponent::RemoveItem(int32 SlotIndex, int32 Count)
 {
 	if (SlotIndex >= 0 && SlotIndex < HotbarItems.Num())
 	{
-		HotbarItems[SlotIndex].Quantity -= Count;
-        
-		if (HotbarItems[SlotIndex].Quantity <= 0)
+		FInventoryItem& Slot = HotbarItems[SlotIndex];
+		const int32 BeforeQty = Slot.Quantity;
+
+		Slot.Quantity -= Count;
+		if (Slot.Quantity <= 0)
 		{
-			HotbarItems[SlotIndex] = FInventoryItem();
+			Slot = FInventoryItem(); // 완전 비움
 		}
-        
+
 		OnInventoryUpdated.Broadcast();
+
+		CLog::Log(FString::Printf(TEXT("[Inventory] RemoveItem slot:%d count:%d -> before:%d, now:%d"),
+			SlotIndex, Count, BeforeQty, HotbarItems[SlotIndex].Quantity));
+	}
+	else
+	{
+		CLog::Log(FString::Printf(TEXT("[Inventory] RemoveItem ignored. Invalid slot:%d"), SlotIndex));
 	}
 }
 

@@ -7,6 +7,9 @@
 #include "Engine/World.h"
 #include "Engine/EngineTypes.h"
 #include "CollisionQueryParams.h"
+#include "Camera/CameraComponent.h"
+#include "00_Character/CPlayerCharacter.h"
+#include "00_Character/02_Component/03_Inventory/CInventoryComponent.h"
 
 ACFlashlightItem::ACFlashlightItem()
 {
@@ -24,22 +27,34 @@ ACFlashlightItem::ACFlashlightItem()
 void ACFlashlightItem::BeginPlay()
 {
 	Super::BeginPlay();
-	// 필요 시 초기화
 }
 
 void ACFlashlightItem::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	// 플레이어 카메라 방향에 라이트 방향 동기화
+	if (AActor* OwnerActor = GetOwner())
+	{
+		if (UCameraComponent* Cam = OwnerActor->FindComponentByClass<UCameraComponent>())
+		{
+			Spot->SetWorldRotation(Cam->GetComponentRotation());
+		}
+	}
+
 	if (bOn)
 	{
 		if (BatteryPercent > 0.f)
 		{
 			BatteryPercent = FMath::Max(0.f, BatteryPercent - DrainPercentPerSecond * DeltaSeconds);
-			if (BatteryPercent <= 0.f)
-			{
-				TurnOff();
-			}
+		}
+
+		if (BatteryPercent <= 0.f)
+		{
+			// 방전 처리: 끄고 인벤토리에서 손전등 제거
+			if (bOn) TurnOff();
+			RemoveFromInventoryOnDeplete();
+			return;
 		}
 	}
 }
@@ -50,6 +65,13 @@ void ACFlashlightItem::AttachToHand(USceneComponent* Mesh, FName SocketName, con
 	AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, SocketName);
 	AddActorLocalOffset(Offset);
 	AddActorLocalRotation(RotOffset);
+}
+
+void ACFlashlightItem::InitializeFromInventoryItem(const FInventoryItem& InItem, UCInventoryComponent* InInventory, ACPlayerCharacter* InOwner)
+{
+	ItemIDForInventory = InItem.ItemID;
+	OwnerInventory = InInventory;
+	OwningPlayer = InOwner;
 }
 
 void ACFlashlightItem::Toggle()
@@ -132,4 +154,24 @@ void ACFlashlightItem::ApplyStunCone()
 
 		Enemy->NotifyShinedByFlashlight(Intensity, Start);
 	}
+}
+
+void ACFlashlightItem::RemoveFromInventoryOnDeplete()
+{
+	if (bPendingRemovalOnDeplete)
+		return;
+	bPendingRemovalOnDeplete = true;
+
+	// 인벤토리에서 손전등 1개 제거
+	if (UCInventoryComponent* Inv = OwnerInventory.Get())
+	{
+		int32 SlotIdx = Inv->FindFirstSlotIndexByID(ItemIDForInventory);
+		if (SlotIdx >= 0)
+		{
+			Inv->RemoveItem(SlotIdx, 1);
+		}
+	}
+
+	// 자기 자신 파괴(플레이어는 OnDestroyed로 HeldItemActor 정리)
+	Destroy();
 }
