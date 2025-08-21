@@ -38,6 +38,8 @@ void ACPickupItem::BeginPlay()
     {
         CollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &ACPickupItem::OnOverlapBegin);
     }
+
+    
 }
 
 void ACPickupItem::OnOverlapBegin(UPrimitiveComponent* /*OverlappedComponent*/, AActor* OtherActor,

@@ -19,6 +19,9 @@ protected:
     
 	UPROPERTY(EditAnywhere, Category = "Components")
 	UStaticMeshComponent* Mesh;
+
+	UPROPERTY(EditAnywhere, Category = "Components")
+	FVector MeshOffest;
     
 	UPROPERTY(EditAnywhere, Category = "Components")
 	class USphereComponent* CollisionSphere;

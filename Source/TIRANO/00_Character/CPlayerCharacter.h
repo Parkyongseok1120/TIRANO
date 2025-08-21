@@ -18,6 +18,8 @@ class UCStatusUI;
 class ACFlashlightItem;
 class UCBatteryHUDWidget;
 class USphereComponent;
+class UUserWidget;           // 추가: 문 프롬프트 UI
+class ACDoorActor;           // 추가: 문 액터
 
 struct FInputActionValue;
 
@@ -44,6 +46,9 @@ public:
 public:
 	void BeginZoom();
 	void EndZoom();
+
+	// 문 근처 오버랩 진입/이탈에서 호출
+	void SetNearbyDoor(ACDoorActor* Door, bool bEnter);
 
 private:
 	void Input_Move(const FInputActionValue& InputActionValue);
@@ -196,6 +201,17 @@ private:
 
 	UPROPERTY()
 	UCHotbarWidget* HotbarWidget;
+
+	// ===== Door prompt UI =====
+	UPROPERTY(EditDefaultsOnly, Category="UI|Door")
+	TSubclassOf<UUserWidget> DoorPromptWidgetClass;
+
+	UPROPERTY()
+	UUserWidget* DoorPromptWidget = nullptr;
+
+	// 현재 근처 문
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Door", meta=(AllowPrivateAccess="true"))
+	TWeakObjectPtr<ACDoorActor> NearbyDoor;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")

@@ -10,6 +10,7 @@
 #include "02_UI/CHotbarWidget.h"
 #include "02_UI/CBatteryHUDWidget.h"
 #include "02_UI/CStatusUI.h"
+#include "03_World/CDoorActor.h"     
 
 #include "01_Item/CThrowableItemBase.h"
 #include "01_Item/CFlashlightItem.h"
@@ -212,6 +213,13 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 void ACPlayerCharacter::OnFPressed()
 {
+	// 0) 문이 가까우면 문 토글이 최우선
+	if (NearbyDoor.IsValid())
+	{
+		NearbyDoor->ToggleDoor();
+		return;
+	}
+
 	const int32 SlotIdx = InventoryComponent ? InventoryComponent->GetSelectedSlotIndex() : -1;
 	const FInventoryItem Selected = InventoryComponent ? InventoryComponent->GetSelectedItem() : FInventoryItem();
 
@@ -220,19 +228,12 @@ void ACPlayerCharacter::OnFPressed()
 	// 1) 선택 슬롯이 '배터리'이고, 손전등을 들고 있다면: 배터리 '소비'
 	if (Flashlight && Selected.Quantity > 0 && Selected.ItemID == BatteryItemId.ToString())
 	{
-		// 선택 슬롯의 배터리 퍼센트를 손전등에 장착
 		const float NewBatteryFromInventory = FMath::Clamp(Selected.BatteryPercent, 0.f, 100.f);
 		Flashlight->SetBatteryPercent(NewBatteryFromInventory);
 
-		// 인벤토리에서 선택 슬롯 배터리 1개 제거
 		if (InventoryComponent && SlotIdx >= 0)
 		{
 			InventoryComponent->RemoveItem(SlotIdx, 1);
-
-			// 안전 확인(디버그): 제거 후 슬롯 상태 로그
-			const FInventoryItem After = InventoryComponent->GetItemAt(SlotIdx);
-			CLog::Log(FString::Printf(TEXT("[BatteryUse] Slot %d after remove -> ID:%s, Qty:%d"),
-				SlotIdx, *After.ItemID, After.Quantity));
 		}
 
 		UpdateBatteryUI();
@@ -246,6 +247,32 @@ void ACPlayerCharacter::OnFPressed()
 		Flashlight->Toggle();
 	}
 }
+
+
+// 문 근처 감지 진입/이탈 시 호출
+void ACPlayerCharacter::SetNearbyDoor(ACDoorActor* Door, bool bEnter)
+{
+	if (bEnter)
+	{
+		NearbyDoor = Door;
+		if (DoorPromptWidget)
+		{
+			DoorPromptWidget->SetVisibility(ESlateVisibility::Visible);
+		}
+	}
+	else
+	{
+		if (NearbyDoor.Get() == Door)
+		{
+			NearbyDoor = nullptr;
+			if (DoorPromptWidget)
+			{
+				DoorPromptWidget->SetVisibility(ESlateVisibility::Hidden);
+			}
+		}
+	}
+}
+
 
 ACFlashlightItem* ACPlayerCharacter::GetHeldFlashlight() const
 {
