@@ -9,11 +9,15 @@
 #include "Perception/AISense_Hearing.h"
 #include "Kismet/GameplayStatics.h"
 #include "00_Character/CPlayerCharacter.h"
+#include "00_Character/02_Component/ProximityFootstepComponent.h"
 #include "Navigation/PathFollowingComponent.h"
+#include "Blueprint/UserWidget.h" // 추가
+#include "00_Character/02_Component/ProximityFootstepComponent.h"
 
 AEnemyCharacter::AEnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	FootstepComponent = CreateDefaultSubobject<UProximityFootstepComponent>(TEXT("FootStepComponent"));
 
 	KillRange = CreateDefaultSubobject<USphereComponent>(TEXT("KillRange"));
 	KillRange->SetupAttachment(GetRootComponent());
@@ -355,6 +359,9 @@ void AEnemyCharacter::TryExecutePlayer(AActor* PlayerActor)
 	{
 		if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
 		{
+			bPlayerIsDead=true;
+			ShowGameOverUI();
+
 			PC->SetPause(true);
 		}
 	}, 1.2f, false);
@@ -368,4 +375,28 @@ void AEnemyCharacter::SetupKillRangeCollision()
 	KillRange->SetCollisionResponseToAllChannels(ECR_Ignore);
 	KillRange->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	KillRange->SetGenerateOverlapEvents(true);
+}
+
+void AEnemyCharacter::ShowGameOverUI()
+{
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (!PC) return;
+
+	if (!GameOverWidgetInstance && GameOverWidgetClass)
+	{
+		GameOverWidgetInstance = CreateWidget<UUserWidget>(PC, GameOverWidgetClass);
+		if (GameOverWidgetInstance)
+		{
+			GameOverWidgetInstance->AddToViewport(100);
+		}
+	}
+
+	// 마우스/입력 모드: UI Only
+	FInputModeUIOnly Mode;
+	if (GameOverWidgetInstance)
+	{
+		Mode.SetWidgetToFocus(GameOverWidgetInstance->TakeWidget());
+	}
+	PC->SetInputMode(Mode);
+	PC->bShowMouseCursor = true;
 }

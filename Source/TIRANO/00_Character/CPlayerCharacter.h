@@ -20,7 +20,8 @@ class ACFlashlightItem;
 class UCBatteryHUDWidget;
 class USphereComponent;
 class UUserWidget;           // 추가: 문 프롬프트 UI
-class ACDoorActor;           // 추가: 문 액터
+class ACDoorActor;
+class UProximityFootstepComponent;// 추가: 문 액터
 
 struct FInputActionValue;
 
@@ -284,4 +285,8 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Collision|KillOverlap", meta=(ClampMin="10.0", AllowPrivateAccess="true"))
 	float KillOverlapRadius = 45.f; // 캡슐 반경(보통 42)보다 약간 크게
+
+protected:
+	UPROPERTY(EditAnywhere, Category="UI|Sound")
+	UProximityFootstepComponent* FootstepComponent;
 };

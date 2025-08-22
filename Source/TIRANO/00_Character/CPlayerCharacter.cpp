@@ -6,6 +6,7 @@
 #include "00_Character/02_Component/CDashComponent.h"
 #include "00_Character/02_Component/03_Inventory/CInventoryComponent.h"
 #include "00_Character/02_Component/02_ABS/CPlayerAttributeSet.h"
+#include "00_Character/02_Component/ProximityFootstepComponent.h"
 
 #include "02_UI/CHotbarWidget.h"
 #include "02_UI/CBatteryHUDWidget.h"
@@ -35,6 +36,7 @@
 
 #include "Global.h"
 #include "Blueprint/UserWidget.h"
+
 
 // Sets default values
 ACPlayerCharacter::ACPlayerCharacter()
@@ -75,6 +77,8 @@ ACPlayerCharacter::ACPlayerCharacter()
 	bCanDoubleJump = true;
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AttributeSet = CreateDefaultSubobject<UCPlayerAttributeSet>(TEXT("AttributeSet"));
+	FootstepComponent = CreateDefaultSubobject<UProximityFootstepComponent>(TEXT("FootStepComponent"));
+
 
 }
 

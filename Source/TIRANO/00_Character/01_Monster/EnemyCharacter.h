@@ -143,6 +143,7 @@ protected:
 	// 거리기반 킬 체크(페일세이프)
 	UPROPERTY(EditAnywhere, Category="AI|Combat")
 	bool bUseDistanceKillFallback = true;
+	
 
 	// Cached controller
 	UPROPERTY()
@@ -153,4 +154,25 @@ protected:
 
 	// Utility: Has LOS to actor?
 	bool HasLineOfSightToActor(AActor* Other) const;
+
+
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI|GameState")
+	bool bPlayerIsDead = false;
+
+	// ===== UI: Game Over =====
+protected:
+	// 게임 오버 위젯 클래스(에디터에서 UMG 파생 BP를 지정 추천)
+	UPROPERTY(EditDefaultsOnly, Category="UI|GameOver")
+	TSubclassOf<UUserWidget> GameOverWidgetClass;
+
+	// 내부 보관: 중복 생성 방지
+	UPROPERTY()
+	UUserWidget* GameOverWidgetInstance = nullptr;
+
+	// 내부 헬퍼: 게임 오버 UI 표시
+	void ShowGameOverUI();
+
+	UPROPERTY(EditAnywhere, Category="UI|Sound")
+	class UProximityFootstepComponent* FootstepComponent;
 };
