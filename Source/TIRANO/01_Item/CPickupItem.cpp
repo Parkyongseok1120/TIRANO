@@ -24,9 +24,7 @@ ACPickupItem::ACPickupItem()
     ItemData.ItemID = TEXT("Item_HealthPotion");
     ItemData.ItemName = TEXT("체력 물약");
     ItemData.Quantity = 1;
-    // 필요 시 장착 가능 및 클래스 지정
-    // ItemData.bIsEquippable = true;
-    // ItemData.ItemClass = ...; 또는 ItemData.ThrowableClass = ...;
+
 }
 
 void ACPickupItem::BeginPlay()
