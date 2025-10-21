@@ -19,9 +19,9 @@ class UCStatusUI;
 class ACFlashlightItem;
 class UCBatteryHUDWidget;
 class USphereComponent;
-class UUserWidget;           // 추가: 문 프롬프트 UI
+class UUserWidget;          
 class ACDoorActor;
-class UProximityFootstepComponent;// 추가: 문 액터
+class UProximityFootstepComponent;
 
 struct FInputActionValue;
 
