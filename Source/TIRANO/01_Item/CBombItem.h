@@ -3,7 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "CThrowableItemBase.h"
-#include "CPickupItem.h" // 반드시 include!
+#include "CPickupItem.h" 
 #include "CBombItem.generated.h"
 
 UCLASS()
@@ -27,8 +27,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Bomb")
 	USoundBase* ExplosionSFX;
 
-	// ★ 여기 추가!
-	// BP에서 'Pickup 파생 클래스' 선택 가능
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bomb")
 	TSubclassOf<ACPickupItem> PickupClass;
 
